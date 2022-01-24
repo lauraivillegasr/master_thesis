@@ -613,6 +613,10 @@ F. Purging assembly to purge duplicates in the assembly that migth be the result
 	get_seqs -e dups.bed $pri_asm
 
 
-aaaa
+All following steps are performed on the resulting purged assembly without the contaminant reads. 
+
+G. Gene annotation
+
+
 
 
