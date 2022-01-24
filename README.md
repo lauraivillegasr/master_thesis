@@ -460,13 +460,12 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 
 
 flye
-	flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8
+```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8
 hifiasm
-	./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz
+```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
 wtdbg2 
-	wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g
-	wtpoa-cns -t 16 -i PS1146_redbean.ctg.lay.gz -fo PS1146_redbean.raw.fa
-
-	minimap2 -t16 -ax map-pb -r2k PS1146_redbean.raw.fa HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz | samtools sort -@4 >PS1146_redbean.bam
-	samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa
+```wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g
+wtpoa-cns -t 16 -i PS1146_redbean.ctg.lay.gz -fo PS1146_redbean.raw.fa
+minimap2 -t16 -ax map-pb -r2k PS1146_redbean.raw.fa HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz | samtools sort -@4 >PS1146_redbean.bam
+samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa```
 
