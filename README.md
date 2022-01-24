@@ -68,10 +68,10 @@ make separate CHEOPS software accessible:
 9.A. Gatk haplotypecaller. Info on the tool: https://gatk.broadinstitute.org/hc/en-us/articles/360037225632-HaplotypeCaller
 
 
-	9.A.1 Indexing files after filtering
+9.A.1 Indexing files after filtering
 ```ls *.bam | parallel samtools index '{}'```
 
-	9.A.2 Haplotype calling 
+9.A.2 Haplotype calling 
 ```gatk HaplotypeCaller -R reference_genomes/panagrolaimus_es5.PRJEB32708.WBPS15.genomic.fa -I filesq30/P_bromber.sort.rmd.q30.bam -O P-bromber.vcf```
 
 
