@@ -1,4 +1,4 @@
-###box plot of pi diversity#####
+###box plot of pi or theta - script for plotting is the same, change sinput file and title of plot#####
 JU1646_pi <- read.delim("~/Documents/Master_Thesis/Pop_analysis/pi_sex_cov_corrected/JU1646.corrected.pi", header=FALSE)
 P_bornheim_pi <- read.delim("~/Documents/Master_Thesis/Pop_analysis/pi_sex_cov_corrected/P_bornheim.corrected.pi", header=FALSE)
 P_bromber_pi <- read.delim("~/Documents/Master_Thesis/Pop_analysis/pi_sex_cov_corrected/P_brombeer.corrected.pi", header=FALSE)
