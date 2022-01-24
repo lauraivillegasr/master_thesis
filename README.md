@@ -321,7 +321,7 @@ The value for $11 changed according to the coverage range defined for the specif
 
 2. We obtained the number of callable sites for each of the lines. We used the already obtained depth files from samtools depth filename.bam > filename.depth
 
-	cat L19G31.sort.bam.sort.bam.depth | awk '{if ($3 >=10 && $3 <=50) print $0}' | wc -l 
+```cat L19G31.sort.bam.sort.bam.depth | awk '{if ($3 >=10 && $3 <=50) print $0}' | wc -l 
 
 
 Obtaining mutation rates and confidence intervals: 
