@@ -1,7 +1,7 @@
 **Master thesis**
 Commands implemented during my master thesis on the topic understanding genomic features of parthenogenetic triploid nematodes
 
-**POPULATION ANALYSIS **
+**POPULATION ANALYSIS**
 
 Part 1. **PRE-PROCESSING of data**
 commands implemented on re-sequencing data from Illumina sequencing. 
@@ -166,7 +166,73 @@ Alternative theta estimation using Tetmer - This tool estimates theta on only ho
 
 Provide histogram to tetmer and obtain per-k-mer theta (if k=21, then you'd have to multiply your result times 21).
 
-PArt 3. **GENE NETWORK USING BUSCO GENES**
+Part 3. **GENE NETWORK USING BUSCO GENES**
+
+1. Run busco on the reference genomes to obtain complete genes that - done in Gvolante
+
+Summary of the Submitted Job:
+        Job ID:    202110281627-9NBARM9ZDMPG2VFR
+        Project name:    PS1159_refgenome
+        Fasta file:    panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.fasta
+        Cut-off length for sequence statistics and composition:    1
+        Sequence type:    genome
+        Selected program:    BUSCO_v4
+        Selected ortholog set:    Nematoda
+
+
+2. With the list obtained in 1 - blast output coordinates.tsv, the regions of interest were extracted from each bam file using (after indexing all files, otherwise it won’t work!!!):
+
+	while read f; do samtools view -b JB051.sort.rmd.q30.bam $f >> $f".JB051.bam" ; done <list_genes 
+
+Files must be afterwards sorted - the list used is “manually edited” in Excel, the result from coordinates is in bed format, to use is as a list contig, start and end point need to be concatenated as one string. PSS159_contig1675 8 1943 —> PS1159_contig1675:8-1675 Excel command: ```(=B1&":"&C1&"-"&D1)```. 
+
+3. Create pileup files with bcftools (summarising the base calls of aligned reads to a reference sequence). The -A refers to paired-end data, needs to be specified as it isn’t default. 
+
+	while read f, do bcftools mpileup -A -f panagrolaimus_es5.PRJEB32708.WBPS16.genomic.fa.gz $f > $f"_mpileup"; done <list_bamsort
+
+4. Variant calling using pileup files. -Ov option will give an uncompressed vcf file as result, other options are available such as BCF of vcf.gz, but vcf is required for following steps. 
+
+
+	for n in *_mpileup ; do
+       	 bcftools call -mv -Ov $n > ${n%*_mpileup}.vcf
+	done
+
+Note: usually steps 3 and 4 are performed as one command ```bcftools mpileup -Ou -f reference.fa alignments.bam | bcftools call -mv -Ob -o calls.bcf```
+
+5. Create and index for each vcf file
+
+	for file in *.vcf; do gatk-4.2.3.0/gatk IndexFeatureFile -I ${file} -O ${file}.idx ; done
+
+6. “Manual” editing. GATK wouldn’t take regions starting at position 0, but needed to be provided as position 1. All files were renamed when their position started with :0-.e.g. PS1159_contig1345:0-1928.ZZZ.ZZZ. 
+
+	for f in *:0-*; do mv -i -- "$f" "${f//:0-/:1-}"; done 
+
+7. Create a list with all positions now with all positions starting with 1. Or change same “word” in list used in 2. 
+
+8. Create index of fasta file 
+
+	samtools faidx panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa
+
+9. Create a dictionary for the reference genome
+
+	gatk-4.2.3.0/gatk CreateSequenceDictionary -R panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa ****I AM CURRENTLY HERE WITH SEX NET***
+
+10. Create a consensus sequence, it takes the reference genome we mapped against -R, provide the output name we want for our file -O, the region from the reference genome that we want to have a consensus sequence from while using the reads present in this region -L and the VCF file  
+
+(the list only contains the contain position as it is common between all strains, individual scripts were submitted for each strain to allow manual specification of files to be used as input e.g. $j.bcf.vcf where region is $j
+
+	while read f ;do gatk-4.2.3.0/gatk FastaAlternateReferenceMaker -R panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa -O $f.DL137G2.consensus.fa -L $f -V $f.DL137G2.vcf ; done<list-XX
+
+
+
+
+If not enough reads, or not at all are present in the define region (for example a consensus would end up as many NNNNNN), the consensus sequence is not created because there is not enough information within the region to work. 
+
+
+
+
+
+
 
  **ESTIMATION OF MUTATION RATES**
 
