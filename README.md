@@ -15,41 +15,42 @@ make separate CHEOPS software accessible:
 2. Mapping to reference genome via bwa mem
 
 	2.1 Create index for mapping: 
-	bwa index ref.fa```
+```bwa index ref.fa```
 
 	2.2 Mapping: 
-	bwa mem -M -t 30 -R “@RG\tID:sample-id\tSM:sample\tPL:ILLUMINA\tPU:1” /path/to/reference-genome.fasta out.forward.fastq out.reverse.fastq > sample-1_bwamem.sam 
+```bwa mem -M -t 30 -R “@RG\tID:sample-id\tSM:sample\tPL:ILLUMINA\tPU:1” /path/to/reference-genome.fasta out.forward.fastq out.reverse.fastq > sample-1_bwamem.sam``` 
 
 
 3. Creating list for looping further analysis
   
  #create file list
-	ls -1 | sed 's/_bwamem.sam//g' > list-XX
+```ls -1 | sed 's/_bwamem.sam//g' > list-XX```
 
 4. Convert sam to bam and sort files
 
 
-ls -1 | sed 's/_bwamem.sam//g' > list-XX
-while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX
+```ls -1 | sed 's/_bwamem.sam//g' > list-XX```
+```while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX```
 
 
-cat list-XX | parallel -j 12 'samtools sort -@ 4 -o {}bwamem.sort.bam {}.sam'
+```cat list-XX | parallel -j 12 'samtools sort -@ 4 -o {}bwamem.sort.bam {}.sam'```
 
 
 5. Indexing sorted bam files 
 
- 	ls *.sort.bam | parallel samtools index '{}'
+ ```ls *.sort.bam | parallel samtools index '{}'```
 	
 6. quality statistics of your mappings via qualimap. Info on the tool  http://qualimap.conesalab.org/
 	#create data-description-file for multi-bamqc
-	ls -d -1 $PWD/** | grep sort.bam$ > qualimap.list  ### requires additional manual editing - I used nano editor
+```ls -d -1 $PWD/** | grep sort.bam$ > qualimap.list  ### requires additional manual editing - I used nano editor```
 
 	#example:
 
-NAME         PATH						                          GROUP   #header is not part of the list. List should be tab delimited
-c12_JU_100	/scratch/lvilleg1/MAL/c12_JU_100bwamem.sort_stats       c12_JU_100
-c12_JU_47	/scratch/lvilleg1/MAL/c12_JU_47bwamem.sort_stats        c12_JU_47
-c12_JU_60	/scratch/lvilleg1/MAL/c12_JU_60bwamem.sort_stats        c12_JU_60
+|NAME        | PATH	|GROUP |  header is not part of the list. List should be tab delimited
+-------------|----------|-------|
+|c12_JU_100|	|/scratch/lvilleg1/MAL/c12_JU_100bwamem.sort_stats |      c12_JU_100|
+|c12_JU_47|	|/scratch/lvilleg1/MAL/c12_JU_47bwamem.sort_stats   |     c12_JU_47|
+|c12_JU_60|	|/scratch/lvilleg1/MAL/c12_JU_60bwamem.sort_stats    |    c12_JU_60|
 
 
 
