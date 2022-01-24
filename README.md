@@ -172,7 +172,6 @@ Part 3. **GENE NETWORK USING BUSCO GENES**
 
 | Characteristic| Description |
 | --- | --- |
-|Job ID|202110281627-9NBARM9ZDMPG2VFR|
 |Project name|PS1159_refgenome|
 |Fasta file|panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.fasta|
 |Cut-off length for sequence statistics and composition|1|
