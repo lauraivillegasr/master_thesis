@@ -1,7 +1,7 @@
 **Master thesis**
 Commands implemented during my master thesis on the topic understanding genomic features of parthenogenetic triploid nematodes
 
-POPULATION ANALYSIS 
+**POPULATION ANALYSIS **
 
 Part 1. **PRE-PROCESSING of data**
 commands implemented on re-sequencing data from Illumina sequencing. 
@@ -166,7 +166,9 @@ Alternative theta estimation using Tetmer - This tool estimates theta on only ho
 
 Provide histogram to tetmer and obtain per-k-mer theta (if k=21, then you'd have to multiply your result times 21).
 
-Part 3. **ESTIMATION OF MUTATION RATES**
+PArt 3. **GENE NETWORK USING BUSCO GENES**
+
+ **ESTIMATION OF MUTATION RATES**
 
 Installing accuMulate gave some problems. Remember to add the path of bamtools folder to my path using `export PATH=$PATH:/your/new/path/here`
 
@@ -178,7 +180,7 @@ All reads coming from PS1159 where merged
 
 We checked through fastqc to estimate/know wether the conversion worked: the result showed: SANGER :D
 
-Pre-processing as done on part 1. 
+Pre-processing as done on part 1 from Population analysis. 
 Trimming
 
 	./fastp -i /scratch/a200302/L19G31/SN7640087_3184_L19G31_1_sequence.fq.gz  -I /scratch/a200302/L19G31/SN7640087_3184_L19G31_2_sequence.fq.gz -o /scratch/lvilleg1/L19G31_1 -O /scratch/lvilleg1/L19G31_1 -h /scratch/lvilleg1/report_L19G31
