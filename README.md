@@ -231,7 +231,7 @@ If not enough reads, or not at all are present in the define region (for example
 
 12.1 Obtain list of fasta file consensus from each folder/strain
 
-```ls DL137G2/changed_* | sed 's/DL137G2\///g'> list_DL137G2````
+```ls DL137G2/changed_* | sed 's/DL137G2\///g'> list_DL137G2```
 
 DL137G2 can be change in each case for the name of folder/strain
 
@@ -249,7 +249,7 @@ DL137G2 can be change in each case for the name of folder/strain
 
 12.5 Check some files to make sure that you have all 7 headers from the 7 strains 
 
-```ls *mafft | head -n 10 ```
+```ls *mafft | head -n 10```
 
 ```grep -o '>' changed_PS1159_contig10078:2915-14059_for_mafft | wc -l ```—> 7 should be the output in this case
 
