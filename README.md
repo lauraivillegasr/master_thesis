@@ -46,7 +46,7 @@ make separate CHEOPS software accessible:
 
 	#example:
 
-|NAME        | PATH	|GROUP |  header is not part of the list. List should be tab delimited
+|NAME        | PATH	|GROUP |  
 -------------|----------|-------|
 |c12_JU_100|	|/scratch/lvilleg1/MAL/c12_JU_100bwamem.sort_stats |      c12_JU_100|
 |c12_JU_47|	|/scratch/lvilleg1/MAL/c12_JU_47bwamem.sort_stats   |     c12_JU_47|
