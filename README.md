@@ -187,7 +187,7 @@ Files must be afterwards sorted - the list used is “manually edited” in Exce
 
 3. Create pileup files with bcftools (summarising the base calls of aligned reads to a reference sequence). The -A refers to paired-end data, needs to be specified as it isn’t default. 
 
-	while read f, do bcftools mpileup -A -f panagrolaimus_es5.PRJEB32708.WBPS16.genomic.fa.gz $f > $f"_mpileup"; done <list_bamsort
+```while read f, do bcftools mpileup -A -f panagrolaimus_es5.PRJEB32708.WBPS16.genomic.fa.gz $f > $f"_mpileup"; done <list_bamsort```
 
 4. Variant calling using pileup files. -Ov option will give an uncompressed vcf file as result, other options are available such as BCF of vcf.gz, but vcf is required for following steps. 
 
