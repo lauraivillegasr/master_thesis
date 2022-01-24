@@ -459,6 +459,16 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 ### **GENOME ASSEMBLY**
 
 
+A. Checking kmer spectra of the rwas reads using different tools
+
+BBmap
+
+```bbmap/kmercountexact.sh qin=33 k=27 in=HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz khist=PS1146_bbmaphistk27.txt peaks=PS1146_bbmaopeaks27.txt -Xmx3600M```
+
+KAT - K-mer Analysis Toolkit
+
+```kat hist -o ES5_kat227 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz```
+
 1. Flye
 
 ```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
