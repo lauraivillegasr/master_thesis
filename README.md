@@ -1,11 +1,11 @@
-# Master_thesis
+**Master thesis**
 Commands implemented during my master thesis on the topic understanding genomic features of parthenogenetic triploid nematodes
 
-###PRE-PROCESSING of data
-####commands implemented on re-sequencing data from Illumina sequencing. 
+**PRE-PROCESSING of data**
+commands implemented on re-sequencing data from Illumina sequencing. 
 
 make separate CHEOPS software accessible:
-module use /opt/rrzk/modules/experimental
+```module use /opt/rrzk/modules/experimental```
 
 1. Trimming using fastp: 
 
@@ -15,7 +15,7 @@ module use /opt/rrzk/modules/experimental
 2. Mapping to reference genome via bwa mem
 
 	2.1 Create index for mapping: 
-	bwa index ref.fa
+	bwa index ref.fa```
 
 	2.2 Mapping: 
 	bwa mem -M -t 30 -R “@RG\tID:sample-id\tSM:sample\tPL:ILLUMINA\tPU:1” /path/to/reference-genome.fasta out.forward.fastq out.reverse.fastq > sample-1_bwamem.sam 
