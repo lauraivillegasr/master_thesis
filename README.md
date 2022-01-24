@@ -170,8 +170,8 @@ Part 3. **GENE NETWORK USING BUSCO GENES**
 
 1. Run busco on the reference genomes to obtain complete genes that - done in Gvolante
 
-|Summary of the Submitted Job BUSCO|
-|___________________________________|
+
+|________________|___________________|
 |Job ID|202110281627-9NBARM9ZDMPG2VFR|
 |Project name|PS1159_refgenome|
 |Fasta file|panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.fasta|
