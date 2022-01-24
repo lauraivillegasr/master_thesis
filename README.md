@@ -221,15 +221,60 @@ Note: usually steps 3 and 4 are performed as one command ```bcftools mpileup -Ou
 
 	while read f ;do gatk-4.2.3.0/gatk FastaAlternateReferenceMaker -R panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa -O $f.DL137G2.consensus.fa -L $f -V $f.DL137G2.vcf ; done<list-XX
 
-
-
-
 If not enough reads, or not at all are present in the define region (for example a consensus would end up as many NNNNNN), the consensus sequence is not created because there is not enough information within the region to work. 
 
+11. Prepare files for the alignment, the header of each consensus sequence needs to be renamed so we can track from which strain it is coming from once we do the alignment. This command runs inside the folder of each strain 
 
+```for FILE in *.fa;do awk '/^>/ {gsub(/.fa?$/,"",FILENAME);printf(">%s\n",FILENAME);next;} {print}' $FILE >>changed_${FILE}; done```
 
+12. Get list of all consensus sequences present in all strains
 
+12.1 Obtain list of fasta file consensus from each folder/strain
 
+```ls DL137G2/changed_* | sed 's/DL137G2\///g'> list_DL137G2````
+
+DL137G2 can be change in each case for the name of folder/strain
+
+12.2 All lists where transferred to excel as one column, manual editing to just have the information on gene location was done using find&replace, then the duplicate function was used and only those positions present in ALL columns were kept and a new file was created: 
+
+375_genes
+
+12.3 With a loop using the file created in 12.2, I copied all gene files from each strain to a new folder 
+
+```while read f; do cp try/$f* try_2/$f.DL137G2; done < 375_genes```
+
+12.4 Put together all the files from one gene into one file for the mafft alignment
+
+ ```while read f; do cat $f* >> $f”_for_mafft” ; done < 375_genes```
+
+12.5 Check some files to make sure that you have all 7 headers from the 7 strains 
+
+```ls *mafft | head -n 10 ```
+
+```grep -o '>' changed_PS1159_contig10078:2915-14059_for_mafft | wc -l ```—> 7 should be the output in this case
+
+You can also check the headers themselves 
+
+```grep '>' changed_PS1159_contig10078:2915-14059_for_mafft```
+
+The output looks like: 7 lines each with the name of the position the files refers to swell as the strain to which a sequence corresponds
+
+``>PS1159_contig10078:2915-14059.DL137G2.consensus
+>PS1159_contig10078:2915-14059.JB051.consensus
+>PS1159_contig10078:2915-14059.p_davidi.consensus
+>PS1159_contig10078:2915-14059.PS1159.consensus
+>PS1159_contig10078:2915-14059.PS1162.consensus
+>PS1159_contig10078:2915-14059.PS1579.consensus
+>PS1159_contig10078:2915-14059.PS1806.consensus```
+
+All files where moved to a folder named “mafft_files”. 
+ 
+13. To run mafft (on cheops1) first do:
+
+```module use /opt/rrzk/modules/experimental
+module load mafft/7.471
+
+parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft``
 
 
  **ESTIMATION OF MUTATION RATES**
@@ -404,6 +449,7 @@ Downloading Bayesian first aid on R
 	devtools::install_github("rasmusab/bayesian_first_aid")
 
 NOTE: as I was working on a Mac computer, an error on installation or jags occurred (package required for bayesian_first_aid). I directly downloaded the package from https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/ and installed it before installing bayesian_first_aid. 
+
 
 
 	JU_sex = c(1.62637E-09, 6.4472E-10, 1.60744E-09, 5.93941E-10, 1.17891E-09)
