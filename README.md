@@ -1,7 +1,9 @@
 **Master thesis**
 Commands implemented during my master thesis on the topic understanding genomic features of parthenogenetic triploid nematodes
 
-**PRE-PROCESSING of data**
+POPULATION ANALYSIS 
+
+A. **PRE-PROCESSING of data**
 commands implemented on re-sequencing data from Illumina sequencing. 
 
 make separate CHEOPS software accessible:
@@ -97,5 +99,71 @@ Mapping for this files was done twice: once for assembly and once for unassemble
 ```bwa mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1806\tPL:ILLUMINA\tPU:1" /path/to/reference-genome.fasta file.unassembled.forward.fastq file.unassembled.reverse.fastq > mapped_unassembledpear.sam```  #no extra indexing required, as the same index from previous mapping could be used
 
 After re-mapping in either case, all steps from pre-processing were followed again. 
+
+B.** POPULATION ANALYSIS USING POPOOLATION:**
+remember to specify -fastq-type!
+
+The sorted final bam files are used as initial input for the tool. 
+
+1. Creating pileup file for (A) individual files (further estimation of pi, theta) and (B) merged files (for Fst estimation)
+
+(A)samtools mpileup P_bornheim.sort.rmd.q30.bam > P_bornheim.pileup
+(B)samtools mpileup -B -b list-samtoolpileup_sex > sexpop.mpileup
+
+B. Creating syncronized files for further estimations 
+
+java -ea -Xmx7g -jar popoolation2_1201/mpileup2sync.jar --input Sex_network/asexpop.mpileup --output Sex_network/asexpop_java.sync --fastq-type sanger —min-qual 30 --threads 4
+
+B.1. Fst estimated on sliding window non overlapping —> to compare populations amongst each other
+
+perl popoolation2_1201/fst-sliding.pl --input Sex_network/asexpop_java.sync  --output Sex_network/asexpop_w1kb_corrected.fst  --suppress-noninformative --min-count 4 --min-coverage 10 --max-coverage 80 --min-covered-fraction 0,5 --window-size 1000 --step-size 1000 --pool-size 3000
+
+B.1.2 Extracting values of Fst from all columns - needs to be done one at a time
+
+awk '{ gsub(/1:2=/,"", $6); print } ' filename > newfilename
+
+
+B.2. Fst estimation on single positions to obtain common positions between all populations (asex as a group and sex as another)
+
+perl popoolation2_1201/fst-sliding.pl --input Sex_network/asexpop_java.sync  --output Sex_network/asexpop_w1kb_corrected.fst  --suppress-noninformative --min-count 4 --min-coverage 10 --max-coverage 80 --min-covered-fraction 0,5 --window-size 1 --step-size 1 --pool-size 3000
+
+B.2.1 From fst per portion, grab only the first two columns that have the information on contain and position present in all pops
+
+awk '{print $1, $2 }' file > positions_asex
+			
+A.1. With he positions file obtained in B.2.1, common positions between all populations were extracted on the individual pileup files using: 
+
+awk 'NR==FNR{a[$1,$2]; next} ($1,$2) in a' positions_asex PS1159.pileup > PS1159.corrected.pileup
+
+
+Using max con asex 80 ans max con sex 57 (when using 60 and 43 the asex pop didn’t have enough positions to be representative of the genome) 
+
+
+Total positions asex: 48704  
+Total positions sex: to be determined with new files: 122138 
+
+A.1.2 Watterson theta and pi estimation using corrected pileup files
+
+perl popoolation_1.2.2/Variance-sliding.pl --measure theta --input Sex_network/p_davidi.corrected.pileup --output Sex_network/p_davidi_WT.file --pool-size 3000 --min-count 2 --min-coverage 10 --max-coverage 80 --window-size 1 --step-size 1 --fastq-type sanger
+ 
+perl popoolation_1.2.2/Variance-sliding.pl --measure pi --input Sex_network/p_davidi.corrected.pileup --output Sex_network/P_davidi_pi.file --pool-size 3000 --min-count 2 --min-coverage 10 --max-coverage 80 --window-size 1 --step-size 1 --fastq-type sanger
+
+A.1.3 Remove all “fake/empty” positions, created by population, to only have meaningful results
+
+awk '$4 !=“0.000”’ pi_PS1579 > corrected_pi_PS1579
+
+A.1.4 Obtaining average values for watterson theta and pi 
+
+awk '{ total += $5; count++ } END { print total/count }' PS1159.pi
+
+
+For visualisation of results as violin plots, maps or fst distribution, codes were generated using R (see files: violin_R_WT.R, w1kb_pi_violin_plot.R, pi_box_plot.R. pi_map_plot.R and coverage script.R)
+
+Alternative theta estimation using Tetmer
+
+kat hist -o DL137G2 Panagrolaimus_rawreads/DL137G2/SN7640087_3181_DL137G2_1_sequence.fq.gz Panagrolaimus_rawreads/DL137G2/SN7640087_3181_DL137G2_2_sequence.fq.gz 
+
+Provide histogram to tetmer and obtain perkmer theta
+
 
 
