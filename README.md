@@ -3,7 +3,7 @@ Commands implemented during my master thesis on the topic understanding genomic 
 
 POPULATION ANALYSIS 
 
-A. **PRE-PROCESSING of data**
+Part 1. **PRE-PROCESSING of data**
 commands implemented on re-sequencing data from Illumina sequencing. 
 
 make separate CHEOPS software accessible:
@@ -17,10 +17,10 @@ make separate CHEOPS software accessible:
 2. Mapping to reference genome via bwa mem
 
 	2.1 Create index for mapping: 
-```bwa index ref.fa```
+```bwamem2 index ref.fa```
 
 	2.2 Mapping: 
-```bwa mem -M -t 30 -R “@RG\tID:sample-id\tSM:sample\tPL:ILLUMINA\tPU:1” /path/to/reference-genome.fasta out.forward.fastq out.reverse.fastq > sample-1_bwamem.sam``` 
+```bwamem2 mem -M -t 30 -R “@RG\tID:sample-id\tSM:sample\tPL:ILLUMINA\tPU:1” /path/to/reference-genome.fasta out.forward.fastq out.reverse.fastq > sample-1_bwamem.sam``` 
 
 
 3. Creating list for looping further analysis
@@ -96,11 +96,11 @@ pear output gives: file.unassembled.forward.fastq, file.unassembled.reverse.fast
 
 Mapping for this files was done twice: once for assembly and once for unassembled reads and then they were merged. 
 
-```bwa mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1806\tPL:ILLUMINA\tPU:1" /path/to/reference-genome.fasta file.unassembled.forward.fastq file.unassembled.reverse.fastq > mapped_unassembledpear.sam```  #no extra indexing required, as the same index from previous mapping could be used
+```bwamem2 mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1806\tPL:ILLUMINA\tPU:1" /path/to/reference-genome.fasta file.unassembled.forward.fastq file.unassembled.reverse.fastq > mapped_unassembledpear.sam```  #no extra indexing required, as the same index from previous mapping could be used
 
 After re-mapping in either case, all steps from pre-processing were followed again. 
 
-B. **POPULATION ANALYSIS USING POPOOLATION:**
+Part 2. **POPULATION ANALYSIS USING POPOOLATION:**
 
 remember to specify -fastq-type!
 
@@ -165,6 +165,192 @@ Alternative theta estimation using Tetmer - This tool estimates theta on only ho
 	kat hist -o DL137G2 Panagrolaimus_rawreads/DL137G2/SN7640087_3181_DL137G2_1_sequence.fq.gz Panagrolaimus_rawreads/DL137G2/SN7640087_3181_DL137G2_2_sequence.fq.gz 
 
 Provide histogram to tetmer and obtain per-k-mer theta (if k=21, then you'd have to multiply your result times 21).
+
+Part 3. **ESTIMATION OF MUTATION RATES**
+
+Installing accuMulate gave some problems. Remember to add the path of bamtools folder to my path using `export PATH=$PATH:/your/new/path/here`
+
+For creating ref pool of PS1159 more reads were added, they had solexa encoding and were transformed to Sanger encoding using: 
+
+	cat 110815_0133_D0738ACXX_5_SA-PE-005_1.solfastq | seqret -filter -auto -sformat fastq-solexa -osformat fastq-sanger -out PS1159_5_1.fastq
+
+All reads coming from PS1159 where merged
+
+We checked through fastqc to estimate/know wether the conversion worked: the result showed: SANGER :D
+
+Pre-processing as done on part 1. 
+Trimming
+
+	./fastp -i /scratch/a200302/L19G31/SN7640087_3184_L19G31_1_sequence.fq.gz  -I /scratch/a200302/L19G31/SN7640087_3184_L19G31_2_sequence.fq.gz -o /scratch/lvilleg1/L19G31_1 -O /scratch/lvilleg1/L19G31_1 -h /scratch/lvilleg1/report_L19G31
+
+Mapping
+
+	bwamem2 mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1159_c12_PS_8\tPL:ILLUMINA\tPU:1" /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.gz /scratch/lvilleg1/MAL_fastp/c12_PS_8_1 /scratch/lvilleg1/MAL_fastp/c12_PS_8_2 > /scratch/lvilleg1/c12_PS_8_bwamem.sam
+
+Convert sam to bam
+
+	ls -1 | sed 's/_bwamem.sam//g' > list-XX
+	while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX
+
+Sort files 
+
+	samtools sort -o /scratch/lvilleg1/MAL/L19G31.sort.bam scratch/lvilleg1/MAL/L19G31.bam #had to be run independently on each file, after a whole day command with parallel was not running
+
+Learn about coverage from sorted files
+
+	ls *.sort.bam | parallel -j 5 'samtools depth {} > {}.sort.bam.depth' 
+
+Remove duplicates using picard
+
+
+module purge #remove the current default java version
+	module load openjdk/1.8.0_202 #need to be loaded, otherwise it tries to run with the incorrect java version and won’t work 
+
+
+	java -jar /home/lvilleg1/picard/build/libs/picard.jar MarkDuplicatesWithMateCigar I=/scratch/lvilleg1/MAL/c12_PS_86.sort.bam O=c12_PS_86.sort.rmd.bam M=c12_PS_86.sort.bam.metrics VALIDATION_STRINGENCY=SILENT MINIMUM_DISTANCE=300 REMOVE_DUPLICATES=true
+
+Remove low quality reads 
+
+ls *.sort.rmd.bam | parallel 'samtools view -q 30 -b {} > {.}.q30’
+
+
+Samtools flagstat can be used to check quality of mapping 
+Indexing files for haplotype caller - maybe ignore
+
+	ls *.sort.rmd.q30.bam | parallel samtools index '{}'
+
+Creating dictionary of reference genome - maybe ignore
+
+	/home/lvilleg1/gatk-4.2.0.0/gatk CreateSequenceDictionary -R /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa
+
+
+To check that the header is correctly stablished
+
+	samtools view -H c12_JU_100.sort.rmd.bam | grep '^@RG'
+	for f in *q30.bam ; do samtools view -H $f | grep '^@RG'; done
+
+
+
+Merging files for accuMUlate 
+
+	samtools merge -r partheno_merged.bamL19G31.sort.rmd.q30.bam PS83Q.sort.rmd.q30.bam c12_PS_22.sort.rmd.q30.bam c12_PS_8.sort.rmd.q30.bam c12_PS_84.sort.rmd.q30.bam c12_PS_86.sort.rmd.q30.bam
+
+	c12_JU_100.sort.rmd.q30.bam c12_JU_47.sort.rmd.q30.bam c12_JU_60.sort.rmd.q30.bam c12_JU_71.sort.rmd.q30.bam c12_JU_73.sort.rmd.q30.bam c12_JU_88.sort.rmd.q30.bam
+
+
+Prepare data for accumulate, obtain ini file and obtain GC content using accumulate tools (pre-requisite: pip3.6 install biopython) ALL THINGS THAT NEEDED PYTHON WHERE SUBMITTED TO CHEOPS0 - note on installing boost for accuMUlate: version 1.73 wouldn’t work, I used 1.62
+
+	module load samtools
+	module load python/3.6.8
+	cd /scratch/lvilleg1/MAL/Final_preprocessing
+
+	samtools view -H parthenoPS1159_merged.bam | python3 /home/lvilleg1/accuMulate-tools/extract_samples.py PS1159_refpool - >> params.PS1159.ini
+
+
+
+	python3 /home/lvilleg1/accuMulate-tools/GC_content.py /home/lvilleg1/reference_genomes/PS1159_reference_genome >> params.PS1159.ini
+
+
+NOTE: CHEOPS ONLY allows to install Biopython on python 3 using pip, however, the scripts of accu-tools are written for python 2. Had to do some editing on printing statement (adapt it to python3 - was written in python2):
+
+Before: 
+ 	print "{}\t{}".format(*pair)
+After:
+ 	print ("{}\t{}".format(*pair))
+
+	python3 /home/lvilleg1/accuMulate-tools/dictionary_converter.py /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa  > /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.dict
+
+
+
+FOLLOWING STEP ON CHEOPS1 WHERE BEDTOOLS IS AVAILABLE
+
+	module load /opt/rrzk/modules/experimental/bedtools/2.29.2 (bedtools on cheops1)
+
+	mkdir -p /scratch/lvilleg1/MAL/Final_preprocessing/tmp
+
+
+	bedtools makewindows -g /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.accu.dict -w 100000 | split -l 1 - /scratch/lvilleg1/MAL/Final_preprocessing/tmp
+
+
+When using n=3 ```terminate called after throwing an instance of 'boost::program_options::invalid_option_value'
+  what():  the argument ('accuMUlate can't only deal with haploid or diploid ancestral samples') for option is invalid```
+
+Running accumulate: 
+
+A change had to be done on the parsers.cc file from accuMUlate. 
+
+1. As the error was coming from the condition of the if defined in line XXX not being fulfilled, we added a print statement that would show exactly what the error was: 
+
+	std::cout << "HOLA SOY LAURA***********: " << start_index; -> prints the start_index that is problematic
+
+2. We add a statement that tells the script to ignore this specific index so the if condition can be fulfilled. 
+
+	if (start_index != std::string::npos || start_index == 18446744073709551615) {
+
+What is 18446744073709551615? Is probably a value defined as a maximum by boost (when not specified differently), one of the tools used by accuMUlate. I think it is plausible that the error is this definition of maximum and not on the data itself as 4 different data sets where tested and the error persisted the same ´18446744073709551615´ 
+
+AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
+
+The command implemented for obtaining candidate mutations was: 
+On CHEOPS1
+
+	parallel -j 6 home/lvilleg1/accuMUlate-0.2.1/build/accuMUlate -c /scratch/lvilleg1/accu_JU/params.JU765.ini -b /scratch/lvilleg1/accu_JU/hermaphroJU765_merged.sort.bam -r /scratch/lvilleg1/accu_JU/propanagrolaimus_ju765.PRJEB32708.WBPS15.genomic.fa -i {} ::: /scratch/lvilleg1/accu_JU/tmp/* > /scratch/lvilleg1/JU765_mutationcandidates #if -o is used to write the output, it goes to the .out file defined on the job batch script. 
+
+
+After obtaining the candidate mutations, filtering stars: 
+
+1. Define coverage range: 
+
+With samtools depth we obtain a file with coverage at several positions, on R we can get the summary statistics for knowing the lower and upper range. We used 2 times the standard deviation of the ref pool for its upper limit: sd(file$V3)
+
+Filtering was done following the code: 
+
+The value for $11 changed according to the coverage range defined for the specific data set. 
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96 && $18 >=0.05 && $19 >=0.05) print $0}' > PS1159_mutationcandidates.filter-A.bed
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575) print $0}' | wc -l 
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0) print $0}' | wc -l
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9) print $0}' | wc -l
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96) print $0}' | wc -l
+
+
+2. We obtained the number of callable sites for each of the lines. We used the already obtained depth files from samtools depth filename.bam > filename.depth
+
+	cat L19G31.sort.bam.sort.bam.depth | awk '{if ($3 >=10 && $3 <=50) print $0}' | wc -l 
+
+
+Obtaining mutation rates and confidence intervals: 
+
+1. For mutation rates the following equation was used for each of the mutation lines: 
+
+	μ=(called mutations)/(generations∗callable sites)
+
+2. Average of μ for each of the strains was calculated. (Can’t insert equation, basically all μ divided the total number of μ for the strain). 
+
+3. Estimation of confidence intervals: 
+
+Downloading Bayesian first aid on R
+
+	install.packages("devtools")
+	devtools::install_github("rasmusab/bayesian_first_aid")
+
+NOTE: as I was working on a Mac computer, an error on installation or jags occurred (package required for bayesian_first_aid). I directly downloaded the package from https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/ and installed it before installing bayesian_first_aid. 
+
+
+	JU_sex = c(1.62637E-09, 6.4472E-10, 1.60744E-09, 5.93941E-10, 1.17891E-09)
+	PS_asex =c(9.64506E-10, 6.94089E-10, 4.08937E-10, 7.2004E-10, 7.9846E-10)
+	comparing= c(9.41896E-10, 5.67965E-10)
+	sites = c(278665301,374228169)
+	bayes.poisson.test(comparing, sites)
+	plot(bayes.poisson.test(comparing, sites))
+
+Sites refers to the number of callable sites for each reproduction mode. The result of this analysis tells us how different our groups are and provides confidence intervals of the values: a lower limit and an upper limit.
+
+
 
 
 
