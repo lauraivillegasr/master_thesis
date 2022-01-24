@@ -510,7 +510,7 @@ Used to obtain busco completeness (BUSCO V4), obtain N50 and check for duplicati
 
 E. Checking for coverage and contaminations using blobtoolkit
 
-Some notes on how to install it on CHEOPS: 
+- Some notes on how to install it on CHEOPS: 
 
 	module purge
 	module load miniconda
@@ -543,6 +543,28 @@ and then inside blobtoolkit/blobtools2:
 ```do pip install -r requirements.txt --ignore-installed certifi```
 
 
+- Creating a data base andding coverage, hits and BUSCO completness results (all steps are done after activating the conda environment btk_env)
+
+Creating the database
+
+```./blobtoolkit/blobtools2/blobtools create --fasta ES5_hifiasm/ES5_primary_contigs_hifiasm.fa ES5_hifiasm/Dataset_blob/```
+
+Adding BUSCO results
+
+```./blobtoolkit/blobtools2/blobtools add --busco blobtools_info/ES5_hifiasm.busco.nematoda_odb10.tsv blobtools_info/ES5_hifiasm```
+
+While running add busco, the .tsv file is the one obtained while running busco on gvolante. It requires bit of manual editing, like changing the contigs names so they match that of the assembly and removing missing genes so all contigs match the identifiers defined while creating the database.
+
+Running blast to obtain hits that will be added to the database
+
+```blastn -db blobtools_info/nt/nt \
+       -query ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
+       -outfmt '6 qseqid staxids bitscore std' \
+       -max_target_seqs 10 \
+       -max_hsps 1 \
+       -evalue 1e-25 \
+       -num_threads 32 \
+       -out ES5_hifiasm.ncbi.blastn.out```
 
 
 
