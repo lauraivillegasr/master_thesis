@@ -456,5 +456,5 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 
 
 
-### **Genome assembly**
+### **GENOME ASSEMBLY**
 
