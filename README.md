@@ -586,3 +586,33 @@ While running add busco, the .tsv file is the one obtained while running busco o
 
 ```./blobtoolkit/blobtools2/blobtools view --remote Dataset_blob``` 
 
+
+* Filtering assembly and raw reads according to taxa that has highly different GC content or is bacteria we would expect as contamination from the media
+
+```./blobtoolkit/blobtools2/blobtools filter --param bestsumorder_phylum--Keys=Proteobacteria,Bacteroidetes,Actinobacteria,Chordata,Uroviricota --fastq HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz  —cov ES5_hifiasm/ES5_hifiasm.mapped.bam ES5_hifiasm/Dataset_blob```
+
+
+F. Purging assembly to purge duplicates in the assembly that migth be the result of highly heterozygous regions and not really duplications (purge_dups was installed using conda) 
+
+	conda activate minimap_purge
+
+	pri_asm=2filtered_ES5_hifiasm.fasta
+
+	for i in $(cat pb.fofn)
+	do
+  		minimap2 -xasm20 $pri_asm $i | gzip -c - > $i.paf.gz
+	done
+	pbcstat *.paf.gz
+	calcuts PB.stat > cutoffs 2>calcults.log
+
+	split_fa $pri_asm > $pri_asm.split
+	minimap2 -xasm5 -DP $pri_asm.split $pri_asm.split | gzip -c - > $pri_asm.split.self.paf.gz
+
+	purge_dups -2 -T cutoffs -c PB.base.cov $pri_asm.split.self.paf.gz > dups.bed 2> purge_dups.log
+
+	get_seqs -e dups.bed $pri_asm
+
+
+aaaa
+
+
