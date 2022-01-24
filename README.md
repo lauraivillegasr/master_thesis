@@ -469,6 +469,14 @@ KAT - K-mer Analysis Toolkit
 
 ```kat hist -o ES5_kat227 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz```
 
+B. Genome size estimaton
+
+Can be obtained from the header of the output file from bbmap
+Can be obtained from log file of KAT --> was the most accurate one compared to previous reports on the genus
+Can be obtained using the espectra obtained from KAT using tools like Genomescope (online http://qb.cshl.edu/genomescope/)and findGSE (R based)
+
+Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="PS1146_27mer")```
+
 1. Flye
 
 ```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
