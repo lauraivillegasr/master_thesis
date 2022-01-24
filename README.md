@@ -456,16 +456,16 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 
 
 
-### **GENOME ASSEMBLY**
+### **GENOME ASSEMBLY - using long reads**
 
 
-A. Checking kmer spectra of the rwas reads using different tools
+A. Checking kmer spectra of the raw reads using different tools
 
-BBmap
+- BBmap
 
 ```bbmap/kmercountexact.sh qin=33 k=27 in=HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz khist=PS1146_bbmaphistk27.txt peaks=PS1146_bbmaopeaks27.txt -Xmx3600M```
 
-KAT - K-mer Analysis Toolkit
+- KAT - K-mer Analysis Toolkit
 
 ```kat hist -o ES5_kat227 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz```
 
@@ -477,15 +477,17 @@ Can be obtained using the espectra obtained from KAT using tools like Genomescop
 
 Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="PS1146_27mer")```
 
-1. Flye
+C. Assembly 
+
+- Flye
 
 ```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
 
-2. Hifiasm
+- Hifiasm
 
 ```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
 
-3. Wtdbg2
+- Wtdbg2
 
 ```wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g```
 
@@ -495,10 +497,11 @@ Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="P
 
 ```samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa```
 
-4. Canu - for Hifi reads
+- Canu - for Hifi reads
 
 
 ```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
+
 
 
 
