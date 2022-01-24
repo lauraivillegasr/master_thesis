@@ -33,8 +33,6 @@ make separate CHEOPS software accessible:
 
 ```ls -1 | sed 's/_bwamem.sam//g' > list-XX```
 ```while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX```
-
-
 ```cat list-XX | parallel -j 12 'samtools sort -@ 4 -o {}bwamem.sort.bam {}.sam'```
 
 
@@ -271,9 +269,9 @@ All files where moved to a folder named “mafft_files”.
  
 13. To run mafft (on cheops1) first do:
 
-	module use /opt/rrzk/modules/experimental
-	module load mafft/7.471
-	parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft
+```module use /opt/rrzk/modules/experimental```
+```module load mafft/7.471```
+`parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft
 
 
  **ESTIMATION OF MUTATION RATES**
@@ -315,8 +313,7 @@ Remove duplicates using picard
 
 module purge #remove the current default java version
 	module load openjdk/1.8.0_202 #need to be loaded, otherwise it tries to run with the incorrect java version and won’t work 
-
-
+	
 	java -jar /home/lvilleg1/picard/build/libs/picard.jar MarkDuplicatesWithMateCigar I=/scratch/lvilleg1/MAL/c12_PS_86.sort.bam O=c12_PS_86.sort.rmd.bam M=c12_PS_86.sort.bam.metrics VALIDATION_STRINGENCY=SILENT MINIMUM_DISTANCE=300 REMOVE_DUPLICATES=true
 
 Remove low quality reads 
@@ -355,9 +352,6 @@ Prepare data for accumulate, obtain ini file and obtain GC content using accumul
 	cd /scratch/lvilleg1/MAL/Final_preprocessing
 
 	samtools view -H parthenoPS1159_merged.bam | python3 /home/lvilleg1/accuMulate-tools/extract_samples.py PS1159_refpool - >> params.PS1159.ini
-
-
-
 	python3 /home/lvilleg1/accuMulate-tools/GC_content.py /home/lvilleg1/reference_genomes/PS1159_reference_genome >> params.PS1159.ini
 
 
@@ -375,7 +369,6 @@ After:
 FOLLOWING STEP ON CHEOPS1 WHERE BEDTOOLS IS AVAILABLE
 
 	module load /opt/rrzk/modules/experimental/bedtools/2.29.2 (bedtools on cheops1)
-
 	mkdir -p /scratch/lvilleg1/MAL/Final_preprocessing/tmp
 
 
