@@ -543,19 +543,19 @@ and then inside blobtoolkit/blobtools2:
 ```do pip install -r requirements.txt --ignore-installed certifi```
 
 
-- Creating a data base andding coverage, hits and BUSCO completness results (all steps are done after activating the conda environment btk_env)
+- Creating a data base adding coverage, hits and BUSCO completness results (all steps are done after activating the conda environment btk_env)
 
-Creating the database
+* Creating the database
 
 ```./blobtoolkit/blobtools2/blobtools create --fasta ES5_hifiasm/ES5_primary_contigs_hifiasm.fa ES5_hifiasm/Dataset_blob/```
 
-Adding BUSCO results
+* Adding BUSCO results
 
 ```./blobtoolkit/blobtools2/blobtools add --busco blobtools_info/ES5_hifiasm.busco.nematoda_odb10.tsv blobtools_info/ES5_hifiasm```
 
 While running add busco, the .tsv file is the one obtained while running busco on gvolante. It requires bit of manual editing, like changing the contigs names so they match that of the assembly and removing missing genes so all contigs match the identifiers defined while creating the database.
 
-Running blast to obtain hits that will be added to the database
+* Running blast to obtain hits that will be added to the database
 
 	blastn -db blobtools_info/nt/nt \
        -query ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
@@ -566,14 +566,14 @@ Running blast to obtain hits that will be added to the database
        -num_threads 32 \
        -out ES5_hifiasm.ncbi.blastn.out
 
-Running minimap2 to obtain a mapping of the reads against the assembly and check coverage
+* Running minimap2 to obtain a mapping of the reads against the assembly and check coverage
 
 	minimap2 -ax map-hifi \
          -t 32 ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
          HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz \
 	| samtools sort -@32 -O BAM -o ES5_hifiasm.mapped.bam -
 
-Adding all the generated files to the databse
+* Adding all the generated files to the databse
 
 
 	./blobtoolkit/blobtools2/blobtools add --taxrule bestsumorder \
@@ -582,7 +582,7 @@ Adding all the generated files to the databse
 	--hits filtered_ES5_hifiasm.ncbi.blastn.out \
 	Dataset_blob
 
-Visualizing results (not done on cheops - motoko)
+* Visualizing results (not done on cheops - motoko)
 
 ```./blobtoolkit/blobtools2/blobtools view --remote Dataset_blob``` 
 
