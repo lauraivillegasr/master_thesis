@@ -475,5 +475,5 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 	samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa
 
 4. Canu - for Hifi reads
-	./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz
+```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz
 
