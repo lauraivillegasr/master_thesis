@@ -171,13 +171,13 @@ Part 3. **GENE NETWORK USING BUSCO GENES**
 1. Run busco on the reference genomes to obtain complete genes that - done in Gvolante
 
 Summary of the Submitted Job:
-        Job ID:    202110281627-9NBARM9ZDMPG2VFR
-        Project name:    PS1159_refgenome
-        Fasta file:    panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.fasta
-        Cut-off length for sequence statistics and composition:    1
-        Sequence type:    genome
-        Selected program:    BUSCO_v4
-        Selected ortholog set:    Nematoda
+Job ID:    202110281627-9NBARM9ZDMPG2VFR
+Project name:    PS1159_refgenome
+Fasta file:    panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.fasta
+Cut-off length for sequence statistics and composition:    1
+Sequence type:    genome
+Selected program:    BUSCO_v4
+Selected ortholog set:    Nematoda
 
 
 2. With the list obtained in 1 - blast output coordinates.tsv, the regions of interest were extracted from each bam file using (after indexing all files, otherwise it won’t work!!!):
@@ -193,29 +193,27 @@ Files must be afterwards sorted - the list used is “manually edited” in Exce
 4. Variant calling using pileup files. -Ov option will give an uncompressed vcf file as result, other options are available such as BCF of vcf.gz, but vcf is required for following steps. 
 
 
-	for n in *_mpileup ; do
-       	 bcftools call -mv -Ov $n > ${n%*_mpileup}.vcf
-	done
+```for n in *_mpileup ; do bcftools call -mv -Ov $n > ${n%*_mpileup}.vcf; done```
 
 Note: usually steps 3 and 4 are performed as one command ```bcftools mpileup -Ou -f reference.fa alignments.bam | bcftools call -mv -Ob -o calls.bcf```
 
 5. Create and index for each vcf file
 
-	for file in *.vcf; do gatk-4.2.3.0/gatk IndexFeatureFile -I ${file} -O ${file}.idx ; done
+```for file in *.vcf; do gatk-4.2.3.0/gatk IndexFeatureFile -I ${file} -O ${file}.idx ; done```
 
 6. “Manual” editing. GATK wouldn’t take regions starting at position 0, but needed to be provided as position 1. All files were renamed when their position started with :0-.e.g. PS1159_contig1345:0-1928.ZZZ.ZZZ. 
 
-	for f in *:0-*; do mv -i -- "$f" "${f//:0-/:1-}"; done 
+```for f in *:0-*; do mv -i -- "$f" "${f//:0-/:1-}"; done ```
 
 7. Create a list with all positions now with all positions starting with 1. Or change same “word” in list used in 2. 
 
 8. Create index of fasta file 
 
-	samtools faidx panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa
+```samtools faidx panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa```
 
 9. Create a dictionary for the reference genome
 
-	gatk-4.2.3.0/gatk CreateSequenceDictionary -R panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa ****I AM CURRENTLY HERE WITH SEX NET***
+```gatk-4.2.3.0/gatk CreateSequenceDictionary -R panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa ```
 
 10. Create a consensus sequence, it takes the reference genome we mapped against -R, provide the output name we want for our file -O, the region from the reference genome that we want to have a consensus sequence from while using the reads present in this region -L and the VCF file  
 
