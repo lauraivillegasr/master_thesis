@@ -557,30 +557,30 @@ While running add busco, the .tsv file is the one obtained while running busco o
 
 * Running blast to obtain hits that will be added to the database
 
-	blastn -db blobtools_info/nt/nt \
-       -query ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
-       -outfmt '6 qseqid staxids bitscore std' \
-       -max_target_seqs 10 \
-       -max_hsps 1 \
-       -evalue 1e-25 \
-       -num_threads 32 \
-       -out ES5_hifiasm.ncbi.blastn.out
+		blastn -db blobtools_info/nt/nt \
+       	-query ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
+       	-outfmt '6 qseqid staxids bitscore std' \
+       	-max_target_seqs 10 \
+       	-max_hsps 1 \
+       	-evalue 1e-25 \
+       	-num_threads 32 \
+       	-out ES5_hifiasm.ncbi.blastn.out
 
 * Running minimap2 to obtain a mapping of the reads against the assembly and check coverage
 
-	minimap2 -ax map-hifi \
-         -t 32 ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
-         HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz \
-	| samtools sort -@32 -O BAM -o ES5_hifiasm.mapped.bam -
+		minimap2 -ax map-hifi \
+        	 -t 32 ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
+        	 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz \
+		| samtools sort -@32 -O BAM -o ES5_hifiasm.mapped.bam -
 
 * Adding all the generated files to the databse
 
 
-	./blobtoolkit/blobtools2/blobtools add --taxrule bestsumorder \
-	--taxdump /blobtools_info/taxdump/ \
-	--cov filtered_ES5_hifiasm.mapped.bam \
-	--hits filtered_ES5_hifiasm.ncbi.blastn.out \
-	Dataset_blob
+		./blobtoolkit/blobtools2/blobtools add --taxrule bestsumorder \
+		--taxdump /blobtools_info/taxdump/ \
+		--cov filtered_ES5_hifiasm.mapped.bam \
+		--hits filtered_ES5_hifiasm.ncbi.blastn.out \
+		Dataset_blob
 
 * Visualizing results (not done on cheops - motoko)
 
