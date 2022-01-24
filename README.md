@@ -164,7 +164,7 @@ Alternative theta estimation using Tetmer - This tool estimates theta on only ho
 
 	kat hist -o DL137G2 Panagrolaimus_rawreads/DL137G2/SN7640087_3181_DL137G2_1_sequence.fq.gz Panagrolaimus_rawreads/DL137G2/SN7640087_3181_DL137G2_2_sequence.fq.gz 
 
-Provide histogram to tetmer and obtain perkmer theta
+Provide histogram to tetmer and obtain per-k-mer theta (if k=21, then you'd have to multiply your result times 21).
 
 
 
