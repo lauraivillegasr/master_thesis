@@ -49,9 +49,9 @@ make separate CHEOPS software accessible:
 
 |NAME        | PATH	|GROUP |  
 -------------|----------|-------|
-|c12_JU_100|	/scratch/lvilleg1/MAL/c12_JU_100bwamem.sort_stats |      c12_JU_100|
-|c12_JU_47|	/scratch/lvilleg1/MAL/c12_JU_47bwamem.sort_stats   |     c12_JU_47|
-|c12_JU_60|	/scratch/lvilleg1/MAL/c12_JU_60bwamem.sort_stats    |    c12_JU_60|
+|c12_JU_100|	/scratch/lvilleg1/MAL/c12_JU_100bwamem.sort |      c12_JU_100|
+|c12_JU_47|	/scratch/lvilleg1/MAL/c12_JU_47bwamem.sort   |     c12_JU_47|
+|c12_JU_60|	/scratch/lvilleg1/MAL/c12_JU_60bwamem.sort    |    c12_JU_60|
 
 
 
@@ -473,7 +473,7 @@ B. Genome size estimaton
 
 Can be obtained from the header of the output file from bbmap
 Can be obtained from log file of KAT --> was the most accurate one compared to previous reports on the genus
-Can be obtained using the espectra obtained from KAT using tools like Genomescope (online http://qb.cshl.edu/genomescope/)and findGSE (R based)
+Can be obtained using the espectra obtained from KAT using tools like Genomescope (online http://qb.cshl.edu/genomescope/) and findGSE (R based)
 
 Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="PS1146_27mer")```
 
@@ -501,6 +501,51 @@ C. Assembly
 
 
 ```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
+
+D. Assesing the quality of the assemblies
+
+- GVolante
+
+Used to obtain busco completeness (BUSCO V4), obtain N50 and check for duplications (https://gvolante.riken.jp). Based on these common metrics, the "best" assembly was selected for the following steps.
+
+E. Checking for coverage and contaminations using blobtoolkit
+
+Some notes on how to install it on CHEOPS: 
+
+odule purge
+module load miniconda
+eval "$(conda shell.bash hook)"
+
+
+# Use Conda to install remaining dependencies
+conda create -n btk_env -c conda-forge -y python=3.6 docopt psutil pyyaml ujson tqdm nodejs=10 yq;
+conda activate btk_env;
+conda install -c bioconda -y pysam seqtk;
+conda install -c conda-forge -y geckodriver selenium pyvirtualdisplay;
+pip install fastjsonschema;
+
+mkdir -p ~/blobtoolkit;
+cd ~/blobtoolkit;
+git clone https://github.com/blobtoolkit/blobtools2;
+git clone https://github.com/blobtoolkit/viewer;
+git clone https://github.com/blobtoolkit/specification;
+git clone https://github.com/blobtoolkit/insdc-pipeline;
+
+cd viewer;
+npm install;
+cd ..;
+
+
+inside the btk_env environment in the folder 
+/blobtoolkit/viewer:
+
+npm audit fix  
+and then inside 
+blobtoolkit/blobtools2: 
+
+do pip install -r requirements.txt --ignore-installed certifi
+
+
 
 
 
