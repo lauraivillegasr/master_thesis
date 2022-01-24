@@ -512,9 +512,9 @@ E. Checking for coverage and contaminations using blobtoolkit
 
 Some notes on how to install it on CHEOPS: 
 
-´´´module purge
-module load miniconda
-eval "$(conda shell.bash hook)"´´´
+´´´	module purge
+	module load miniconda
+	eval "$(conda shell.bash hook)"´´´
 
 
 Use Conda to install remaining dependencies: 
