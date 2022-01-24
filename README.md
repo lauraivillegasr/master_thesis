@@ -75,7 +75,7 @@ make separate CHEOPS software accessible:
 ```gatk HaplotypeCaller -R reference_genomes/panagrolaimus_es5.PRJEB32708.WBPS15.genomic.fa -I filesq30/P_bromber.sort.rmd.q30.bam -O P-bromber.vcf```
 
 
-**ADDITIONAL INFORMATION ON PRE-PROCESSING: **
+**ADDITIONAL INFORMATION ON PRE-PROCESSING:**
 
 1. For p_superbus I used NGM - reads shorter than 70bp. Info on the tool: https://github.com/Cibiv/NextGenMap/wiki
 
@@ -90,7 +90,7 @@ make separate CHEOPS software accessible:
 
 ```pear -f forwardread.sanfastq.gz -r reverseread.sanfastq.gz -o pearoutputname```
 				
-				pear output gives: file.unassembled.forward.fastq, file.unassembled.reverse.fastq, file.assembled.forward.fastq file.assembled.reverse.fastq and discarded reads
+pear output gives: file.unassembled.forward.fastq, file.unassembled.reverse.fastq, file.assembled.forward.fastq file.assembled.reverse.fastq and discarded reads
 
 Mapping for this files was done twice: once for assembly and once for unassembled reads and then they were merged. 
 
