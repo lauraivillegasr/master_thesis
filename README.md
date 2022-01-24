@@ -170,14 +170,15 @@ Part 3. **GENE NETWORK USING BUSCO GENES**
 
 1. Run busco on the reference genomes to obtain complete genes that - done in Gvolante
 
-
+| Characteristic| Description |
+| --- | --- |
 |Job ID|202110281627-9NBARM9ZDMPG2VFR|
 |Project name|PS1159_refgenome|
 |Fasta file|panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.fasta|
 |Cut-off length for sequence statistics and composition|1|
 |Sequence type|genome|
 |Selected program |BUSCO_v4|
-|1Selected ortholog set |Nematoda|
+|Selected ortholog set |Nematoda|
 
 
 2. With the list obtained in 1 - blast output coordinates.tsv, the regions of interest were extracted from each bam file using (after indexing all files, otherwise it won’t work!!!):
