@@ -459,13 +459,22 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 ### **GENOME ASSEMBLY**
 
 
-flye
+1. Flye
+
 ```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
-hifiasm
+
+2. Hifiasm
+
 ```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
-wtdbg2 
+
+3. Wtdbg2
+
 ```wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g
 wtpoa-cns -t 16 -i PS1146_redbean.ctg.lay.gz -fo PS1146_redbean.raw.fa
 minimap2 -t16 -ax map-pb -r2k PS1146_redbean.raw.fa HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz | samtools sort -@4 >PS1146_redbean.bam
 samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa```
+
+4. Canu - for Hifi reads
+
+```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz 
 
