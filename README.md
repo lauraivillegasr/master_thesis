@@ -584,5 +584,5 @@ Adding all the generated files to the databse
 
 Visualizing results (not done on cheops - motoko)
 
-```./blobtoolkit/blobtools2/blobtools view --remote Dataset_blob
+```./blobtoolkit/blobtools2/blobtools view --remote Dataset_blob``` 
 
