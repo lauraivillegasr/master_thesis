@@ -9,7 +9,7 @@ par(mar=c(0,0,0,0))
     #col="#f2f2f2", fill=TRUE, bg="white", lwd=0.05,
     #mar=rep(0,4),border=0, ylim=c(-90,90) 
 #)
-locations_pi$θ_π
+
 my_nem_map <- map_data("world")
 library(dplyr)
 locations_pi <- read.csv2("~/Documents/Master_Thesis/locations_pi3.csv")
