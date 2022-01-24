@@ -259,7 +259,7 @@ You can also check the headers themselves
 
 The output looks like: 7 lines each with the name of the position the files refers to swell as the strain to which a sequence corresponds
 
-``>PS1159_contig10078:2915-14059.DL137G2.consensus
+```>PS1159_contig10078:2915-14059.DL137G2.consensus
 >PS1159_contig10078:2915-14059.JB051.consensus
 >PS1159_contig10078:2915-14059.p_davidi.consensus
 >PS1159_contig10078:2915-14059.PS1159.consensus
@@ -274,7 +274,7 @@ All files where moved to a folder named “mafft_files”.
 ```module use /opt/rrzk/modules/experimental
 module load mafft/7.471
 
-parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft``
+parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft```
 
 
  **ESTIMATION OF MUTATION RATES**
