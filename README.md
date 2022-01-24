@@ -319,7 +319,7 @@ module purge #remove the current default java version
 
 Remove low quality reads 
 
-ls *.sort.rmd.bam | parallel 'samtools view -q 30 -b {} > {.}.q30’
+	ls *.sort.rmd.bam | parallel 'samtools view -q 30 -b {} > {.}.q30'
 
 
 Samtools flagstat can be used to check quality of mapping 
