@@ -4,7 +4,7 @@ Commands implemented during my master thesis on the topic understanding genomic 
 
 ### **POPULATION ANALYSIS**
 
-Part 1. **PRE-PROCESSING of data**
+**Part 1.** **PRE-PROCESSING of data**
 commands implemented on re-sequencing data from Illumina sequencing. 
 
 make separate CHEOPS software accessible:
@@ -99,7 +99,7 @@ Mapping for this files was done twice: once for assembly and once for unassemble
 
 After re-mapping in either case, all steps from pre-processing were followed again. 
 
-Part 2. **POPULATION ANALYSIS USING POPOOLATION:**
+**Part 2.** **POPULATION ANALYSIS USING POPOOLATION:**
 
 remember to specify -fastq-type!
 
@@ -165,7 +165,7 @@ Alternative theta estimation using Tetmer - This tool estimates theta on only ho
 
 Provide histogram to tetmer and obtain per-k-mer theta (if k=21, then you'd have to multiply your result times 21).
 
-Part 3. **GENE NETWORK USING BUSCO GENES**
+**Part 3.** **GENE NETWORK USING BUSCO GENES**
 
 1. Run busco on the reference genomes to obtain complete genes that - done in Gvolante
 
