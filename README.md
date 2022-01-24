@@ -48,9 +48,9 @@ make separate CHEOPS software accessible:
 
 |NAME        | PATH	|GROUP |  
 -------------|----------|-------|
-|c12_JU_100|	|/scratch/lvilleg1/MAL/c12_JU_100bwamem.sort_stats |      c12_JU_100|
-|c12_JU_47|	|/scratch/lvilleg1/MAL/c12_JU_47bwamem.sort_stats   |     c12_JU_47|
-|c12_JU_60|	|/scratch/lvilleg1/MAL/c12_JU_60bwamem.sort_stats    |    c12_JU_60|
+|c12_JU_100|	/scratch/lvilleg1/MAL/c12_JU_100bwamem.sort_stats |      c12_JU_100|
+|c12_JU_47|	/scratch/lvilleg1/MAL/c12_JU_47bwamem.sort_stats   |     c12_JU_47|
+|c12_JU_60|	/scratch/lvilleg1/MAL/c12_JU_60bwamem.sort_stats    |    c12_JU_60|
 
 
 
