@@ -540,7 +540,7 @@ inside the btk_env environment in the folder /blobtoolkit/viewer:
 
 and then inside blobtoolkit/blobtools2: 
 
-```do pip install -r requirements.txt --ignore-installed certifi
+```do pip install -r requirements.txt --ignore-installed certifi```
 
 
 
