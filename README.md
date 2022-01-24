@@ -281,11 +281,11 @@ A change had to be done on the parsers.cc file from accuMUlate.
 
 1. As the error was coming from the condition of the if defined in line XXX not being fulfilled, we added a print statement that would show exactly what the error was: 
 
-```std::cout << "HOLA SOY LAURA***********: " << start_index; -> prints the start_index that is problematic
+	std::cout << "HOLA SOY LAURA***********: " << start_index; -> prints the start_index that is problematic
 
 2. We add a statement that tells the script to ignore this specific index so the if condition can be fulfilled. 
 
-```if (start_index != std::string::npos || start_index == 18446744073709551615) {```
+	if (start_index != std::string::npos || start_index == 18446744073709551615) {
 
 What is 18446744073709551615? Is probably a value defined as a maximum by boost (when not specified differently), one of the tools used by accuMUlate. I think it is plausible that the error is this definition of maximum and not on the data itself as 4 different data sets where tested and the error persisted the same ´18446744073709551615´ 
 
