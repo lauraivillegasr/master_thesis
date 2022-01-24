@@ -512,27 +512,27 @@ E. Checking for coverage and contaminations using blobtoolkit
 
 Some notes on how to install it on CHEOPS: 
 
-´´´	module purge
+	module purge
 	module load miniconda
-	eval "$(conda shell.bash hook)"´´´
+	eval "$(conda shell.bash hook)"
 
 
 Use Conda to install remaining dependencies: 
 
-´´´conda create -n btk_env -c conda-forge -y python=3.6 docopt psutil pyyaml ujson tqdm nodejs=10 yq;
-conda activate btk_env;
-conda install -c bioconda -y pysam seqtk;
-conda install -c conda-forge -y geckodriver selenium pyvirtualdisplay;
-pip install fastjsonschema;
-mkdir -p ~/blobtoolkit;
-cd ~/blobtoolkit;
-git clone https://github.com/blobtoolkit/blobtools2;
-git clone https://github.com/blobtoolkit/viewer;
-git clone https://github.com/blobtoolkit/specification;
-git clone https://github.com/blobtoolkit/insdc-pipeline;
-cd viewer;
-npm install;
-cd ..;```
+	conda create -n btk_env -c conda-forge -y python=3.6 docopt psutil pyyaml ujson tqdm nodejs=10 yq;
+	conda activate btk_env;
+	conda install -c bioconda -y pysam seqtk;
+	conda install -c conda-forge -y geckodriver selenium pyvirtualdisplay;
+	pip install fastjsonschema;
+	mkdir -p ~/blobtoolkit;
+	cd ~/blobtoolkit;
+	git clone https://github.com/blobtoolkit/blobtools2;
+	git clone https://github.com/blobtoolkit/viewer;
+	git clone https://github.com/blobtoolkit/specification;
+	git clone https://github.com/blobtoolkit/insdc-pipeline;
+	cd viewer;
+	npm install;
+	cd ..;
 
 inside the btk_env environment in the folder /blobtoolkit/viewer:
 
