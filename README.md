@@ -460,7 +460,7 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 
 
 flye
-```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8
+```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
 hifiasm
 ```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
 wtdbg2 
