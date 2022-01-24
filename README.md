@@ -1,7 +1,8 @@
-**Master thesis**
+# **Master thesis**
+
 Commands implemented during my master thesis on the topic understanding genomic features of parthenogenetic triploid nematodes
 
-**POPULATION ANALYSIS**
+##**POPULATION ANALYSIS**
 
 Part 1. **PRE-PROCESSING of data**
 commands implemented on re-sequencing data from Illumina sequencing. 
@@ -274,7 +275,7 @@ All files where moved to a folder named “mafft_files”.
 `parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft
 
 
- **ESTIMATION OF MUTATION RATES**
+## **ESTIMATION OF MUTATION RATES**
 
 Installing accuMulate gave some problems. Remember to add the path of bamtools folder to my path using `export PATH=$PATH:/your/new/path/here`
 
@@ -455,5 +456,5 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 
 
 
-
+## **Genome assembly**
 
