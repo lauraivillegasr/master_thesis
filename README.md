@@ -170,19 +170,20 @@ Part 3. **GENE NETWORK USING BUSCO GENES**
 
 1. Run busco on the reference genomes to obtain complete genes that - done in Gvolante
 
-Summary of the Submitted Job:
-Job ID:    202110281627-9NBARM9ZDMPG2VFR
-Project name:    PS1159_refgenome
-Fasta file:    panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.fasta
-Cut-off length for sequence statistics and composition:    1
-Sequence type:    genome
-Selected program:    BUSCO_v4
-Selected ortholog set:    Nematoda
+|Summary of the Submitted Job BUSCO|
+|___________________________________|
+|Job ID|202110281627-9NBARM9ZDMPG2VFR|
+|Project name|PS1159_refgenome|
+|Fasta file|panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.fasta|
+|Cut-off length for sequence statistics and composition|1|
+|Sequence type|genome|
+|Selected program |BUSCO_v4|
+|1Selected ortholog set |Nematoda|
 
 
 2. With the list obtained in 1 - blast output coordinates.tsv, the regions of interest were extracted from each bam file using (after indexing all files, otherwise it won’t work!!!):
 
-	while read f; do samtools view -b JB051.sort.rmd.q30.bam $f >> $f".JB051.bam" ; done <list_genes 
+```while read f; do samtools view -b JB051.sort.rmd.q30.bam $f >> $f".JB051.bam" ; done <list_genes ```
 
 Files must be afterwards sorted - the list used is “manually edited” in Excel, the result from coordinates is in bed format, to use is as a list contig, start and end point need to be concatenated as one string. PSS159_contig1675 8 1943 —> PS1159_contig1675:8-1675 Excel command: ```(=B1&":"&C1&"-"&D1)```. 
 
