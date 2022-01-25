@@ -25,10 +25,10 @@ p<-  ggplot() +
   scale_size_continuous(range=c(1,10)) +
   scale_color_viridis(trans="log") +
   theme_void() +
-  guides(size = FALSE)+
+  guides()+
   ggtitle("θ_π for asexual and sexual nematode populations")+
   theme(plot.title = element_text(hjust = 0.5))
-p <- p+ geom_text_repel (data=locations_pi %>% arrange(θ_π) %>% tail(10), aes(x=long, y=lat, label=strain), size=2, fontface = "bold")
+
 p
 
 
