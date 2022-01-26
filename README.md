@@ -271,8 +271,10 @@ All files where moved to a folder named “mafft_files”.
 13. To run mafft (on cheops1) first do:
 
 ```module use /opt/rrzk/modules/experimental```
+
 ```module load mafft/7.471```
-`parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft
+
+```parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft`
 
 
 ### **ESTIMATION OF MUTATION RATES**
