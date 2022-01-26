@@ -244,7 +244,7 @@ DL137G2 can be change in each case for the name of folder/strain
 
 12.4 Put together all the files from one gene into one file for the mafft alignment
 
- ```while read f; do cat $f* >> $f”_for_mafft” ; done < 375_genes```
+ ```while read f; do cat $f* >> $f"_for_mafft" ; done < 375_genes```
 
 12.5 Check some files to make sure that you have all 7 headers from the 7 strains 
 
