@@ -274,7 +274,7 @@ All files where moved to a folder named “mafft_files”.
 
 ```module load mafft/7.471```
 
-```parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft`
+```parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft```
 
 
 ### **ESTIMATION OF MUTATION RATES**
