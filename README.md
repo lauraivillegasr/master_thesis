@@ -276,6 +276,13 @@ All files where moved to a folder named “mafft_files”.
 
 ```parallel -j 8 'mafft {} > {.}.aligned.fasta' ::: *_for_mafft```
 
+14. Concatenate the allignements and save the file in nexus format to make a split network
+
+Using genious, the allignements per gene where uploaded and concatenated using
+
+	Tools → Concatenate Sequences or Alignments
+	
+and exporting the resulting file in .nex format. 
 
 ### **ESTIMATION OF MUTATION RATES**
 
