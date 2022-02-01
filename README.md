@@ -135,14 +135,14 @@ About coverage ranges: for asex populations 10 - 80 and for sex pops 10-56 (mean
 
 	awk '{print $1, $2 }' file > positions_asex
 			
-3.1. With he positions file obtained in B.2.1, common positions between all populations were extracted on the individual pileup files using: 
+3. With he positions file obtained in B.2.1, common positions between all populations were extracted on the individual pileup files using: 
 
 	awk 'NR==FNR{a[$1,$2]; next} ($1,$2) in a' positions_asex PS1159.pileup > PS1159.corrected.pileup
 
 Total positions asex: 48704  
 Total positions sex: 122138 
 
-3.1.2 Watterson theta and pi estimation using corrected pileup files
+3.1. Watterson theta and pi estimation using corrected pileup files
 
 	perl popoolation_1.2.2/Variance-sliding.pl --measure theta --input Sex_network/p_davidi.corrected.pileup --output Sex_network/p_davidi_WT.file --pool-size 3000 --min-count 2 --min-coverage 10 --max-coverage 80 --window-size 1 --step-size 1 --fastq-type sanger
  
@@ -228,25 +228,25 @@ If not enough reads, or not at all are present in the define region (for example
 
 12. Get list of all consensus sequences present in all strains
 
-12.1 Obtain list of fasta file consensus from each folder/strain
+    12.1 Obtain list of fasta file consensus from each folder/strain
 
 ```ls DL137G2/changed_* | sed 's/DL137G2\///g'> list_DL137G2```
 
 DL137G2 can be change in each case for the name of folder/strain
 
-12.2 All lists where transferred to excel as one column, manual editing to just have the information on gene location was done using find&replace, then the duplicate function was used and only those positions present in ALL columns were kept and a new file was created: 
+    12.2 All lists where transferred to excel as one column, manual editing to just have the information on gene location was done using find&replace, then the duplicate function was used and only those positions present in ALL columns were kept and a new file was created: 
 
 375_genes
 
-12.3 With a loop using the file created in 12.2, I copied all gene files from each strain to a new folder 
+    12.3 With a loop using the file created in 12.2, I copied all gene files from each strain to a new folder 
 
 ```while read f; do cp try/$f* try_2/$f.DL137G2; done < 375_genes```
 
-12.4 Put together all the files from one gene into one file for the mafft alignment
+    12.4 Put together all the files from one gene into one file for the mafft alignment
 
  ```while read f; do cat $f* >> $f"_for_mafft" ; done < 375_genes```
 
-12.5 Check some files to make sure that you have all 7 headers from the 7 strains 
+    12.5 Check some files to make sure that you have all 7 headers from the 7 strains 
 
 ```ls *mafft | head -n 10```
 
@@ -386,16 +386,16 @@ Running accumulate:
 
 A change had to be done on the parsers.cc file from accuMUlate. 
 
-11.1. As the error was coming from the condition of the if defined in line XXX not being fulfilled, we added a print statement that would show exactly what the error was: 
+    11.1. As the error was coming from the condition of the if defined in line XXX not being fulfilled, we added a print statement that would show exactly what the error was: 
 
 ```std::cout << "HOLA SOY LAURA***********: " << start_index; -> prints the start_index that is problematic```
-11.2. We add a statement that tells the script to ignore this specific index so the if condition can be fulfilled. 
+    11.2. We add a statement that tells the script to ignore this specific index so the if condition can be fulfilled. 
 
 ```if (start_index != std::string::npos || start_index == 18446744073709551615) {```
 
 What is 18446744073709551615? Is probably a value defined as a maximum by boost (when not specified differently), one of the tools used by accuMUlate. I think it is plausible that the error is this definition of maximum and not on the data itself as 4 different data sets where tested and the error persisted the same ´18446744073709551615´ 
 
-11.3. AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
+    11.3. AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
 
 12. Running accuMUlate to obtain candidate mutations 
 
@@ -405,17 +405,17 @@ What is 18446744073709551615? Is probably a value defined as a maximum by boost 
 
 13. Filtering according to different parameters to only keep mutations with high support
 
-13.1. Define coverage range: 
+    13.1. Define coverage range: 
 
 With samtools depth we obtain a file with coverage at several positions, on R we can get the summary statistics for knowing the lower and upper range. We used 2 times the standard deviation of the ref pool for its upper limit: sd(file$V3)
 
 The value for $11 changed according to the coverage range defined for the specific data set. 
 
-13.2. Filter coverage range ($11), probability of having a mutation on a given site ($7, $8, $9), filter for unique mutations on a sample (not present in other lines $15), avoid calling a mutation given mismapped reads ($16 and $17), enough reads support the mutation ($18 and $19).
+    13.2. Filter coverage range ($11), probability of having a mutation on a given site ($7, $8, $9), filter for unique mutations on a sample (not present in other lines $15), avoid calling a mutation given mismapped reads ($16 and $17), enough reads support the mutation ($18 and $19).
 
 	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96 && $18 >=0.05 && $19 >=0.05) print $0}' > PS1159_mutationcandidates.filter-A.bed
 
-13.2.1. Step by step the decrease in number of putative mutations can be tracked. 
+    13.2.1. Step by step the decrease in number of putative mutations can be tracked. 
 
 	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575) print $0}' | wc -l 
 
@@ -435,13 +435,13 @@ We used the already obtained depth files from ```samtools depth filename.bam > f
 
 15. Obtaining mutation rates and confidence intervals: 
 
-15.1. For mutation rates the following equation was used for each of the mutation lines: 
+    15.1. For mutation rates the following equation was used for each of the mutation lines: 
 
 	μ=(called mutations)/(generations∗callable sites)
 
-15.2. Average of μ for each of the strains was calculated. (Can’t insert equation, basically all μ divided the total number of μ for the strain). 
+    15.2. Average of μ for each of the strains was calculated. (Can’t insert equation, basically all μ divided the total number of μ for the strain). 
 
-15.3. Estimation of confidence intervals: 
+    15.3. Estimation of confidence intervals: 
 
 Downloading Bayesian first aid on R
 
@@ -485,15 +485,15 @@ Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="P
 
 3. Assembly 
 
-3.1. Flye
+    3.1. Flye
 
 ```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
 
-3.2. Hifiasm
+    3.2. Hifiasm
 
 ```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
 
-3.3. Wtdbg2
+    3.3. Wtdbg2
 
 ```wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g```
 
@@ -503,7 +503,7 @@ Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="P
 
 ```samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa```
 
-3.4. Canu - for Hifi reads
+    3.4. Canu - for Hifi reads
 
 
 ```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
