@@ -66,13 +66,13 @@ make separate CHEOPS software accessible:
 
 ```samtools view -q 30 -b in.bam > aligned_reads.q30.bam```
 
-9.A. Gatk haplotypecaller. Info on the tool: https://gatk.broadinstitute.org/hc/en-us/articles/360037225632-HaplotypeCaller
+9. Gatk haplotypecaller. Info on the tool: https://gatk.broadinstitute.org/hc/en-us/articles/360037225632-HaplotypeCaller
 
 
-9.A.1 Indexing files after filtering
+    9.1. Indexing files after filtering
 ```ls *.bam | parallel samtools index '{}'```
 
-9.A.2 Haplotype calling 
+    9.2. Haplotype calling 
 ```gatk HaplotypeCaller -R reference_genomes/panagrolaimus_es5.PRJEB32708.WBPS15.genomic.fa -I filesq30/P_bromber.sort.rmd.q30.bam -O P-bromber.vcf```
 
 
@@ -114,24 +114,24 @@ The sorted final bam files are used as initial input for the tool.
 
 	java -ea -Xmx7g -jar popoolation2_1201/mpileup2sync.jar --input Sex_network/asexpop.mpileup --output Sex_network/asexpop_java.sync --fastq-type sanger —min-qual 30 --threads 4
 
-2.1. Fst estimated on sliding window non overlapping —> to compare populations amongst each other
+    2.1. Fst estimated on sliding window non overlapping —> to compare populations amongst each other
 
 	perl popoolation2_1201/fst-sliding.pl --input Sex_network/asexpop_java.sync  --output Sex_network/asexpop_w1kb_corrected.fst  --suppress-noninformative --min-count 4 --min-coverage 10 --max-coverage 80 --min-covered-fraction 0,5 --window-size 1000 --step-size 1000 --pool-size 3000
 	
 About coverage ranges: for asex populations 10 - 80 and for sex pops 10-56 (meaning 23 is the covergae per gene copy, ase population are triploid whereas sexual ones are diploid)
 
-2.1.2 Extracting values of Fst from all columns - needs to be done one at a time
+    2.1.2 Extracting values of Fst from all columns - needs to be done one at a time
 
 	awk '{ gsub(/1:2=/,"", $6); print } ' filename > newfilename
 
 1:2 means fst of pop1 vs pop2. The order of populations is the same as provided on 1(B)
 
 
-2.2. Fst estimation on single positions to obtain common positions between all populations (asex as a group and sex as another)
+    2.2. Fst estimation on single positions to obtain common positions between all populations (asex as a group and sex as another)
 
 	perl popoolation2_1201/fst-sliding.pl --input Sex_network/asexpop_java.sync  --output Sex_network/asexpop_w1kb_corrected.fst  --suppress-noninformative --min-count 4 --min-coverage 10 --max-coverage 80 --min-covered-fraction 0,5 --window-size 1 --step-size 1 --pool-size 3000
 
-2.2.1 From fst per portion, grab only the first two columns that have the information on contain and position present in all pops
+    2.2.1 From fst per portion, grab only the first two columns that have the information on contain and position present in all pops
 
 	awk '{print $1, $2 }' file > positions_asex
 			
