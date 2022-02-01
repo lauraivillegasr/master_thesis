@@ -105,54 +105,54 @@ remember to specify -fastq-type!
 
 The sorted final bam files are used as initial input for the tool. 
 
-A. Creating pileup file for (A) individual files (further estimation of pi, theta) and (B) merged files (for Fst estimation)
+1. Creating pileup file for (A) individual files (further estimation of pi, theta) and (B) merged files (for Fst estimation)
 
 	samtools mpileup P_bornheim.sort.rmd.q30.bam > P_bornheim.pileup
 	samtools mpileup -B -b list-samtoolpileup_sex > sexpop.mpileup
 
-B. Creating syncronized files for further estimations 
+2. Creating syncronized files for further estimations 
 
 	java -ea -Xmx7g -jar popoolation2_1201/mpileup2sync.jar --input Sex_network/asexpop.mpileup --output Sex_network/asexpop_java.sync --fastq-type sanger —min-qual 30 --threads 4
 
-B.1. Fst estimated on sliding window non overlapping —> to compare populations amongst each other
+2.1. Fst estimated on sliding window non overlapping —> to compare populations amongst each other
 
 	perl popoolation2_1201/fst-sliding.pl --input Sex_network/asexpop_java.sync  --output Sex_network/asexpop_w1kb_corrected.fst  --suppress-noninformative --min-count 4 --min-coverage 10 --max-coverage 80 --min-covered-fraction 0,5 --window-size 1000 --step-size 1000 --pool-size 3000
 	
 About coverage ranges: for asex populations 10 - 80 and for sex pops 10-56 (meaning 23 is the covergae per gene copy, ase population are triploid whereas sexual ones are diploid)
 
-B.1.2 Extracting values of Fst from all columns - needs to be done one at a time
+2.1.2 Extracting values of Fst from all columns - needs to be done one at a time
 
 	awk '{ gsub(/1:2=/,"", $6); print } ' filename > newfilename
 
 1:2 means fst of pop1 vs pop2. The order of populations is the same as provided on 1(B)
 
 
-B.2. Fst estimation on single positions to obtain common positions between all populations (asex as a group and sex as another)
+2.2. Fst estimation on single positions to obtain common positions between all populations (asex as a group and sex as another)
 
 	perl popoolation2_1201/fst-sliding.pl --input Sex_network/asexpop_java.sync  --output Sex_network/asexpop_w1kb_corrected.fst  --suppress-noninformative --min-count 4 --min-coverage 10 --max-coverage 80 --min-covered-fraction 0,5 --window-size 1 --step-size 1 --pool-size 3000
 
-B.2.1 From fst per portion, grab only the first two columns that have the information on contain and position present in all pops
+2.2.1 From fst per portion, grab only the first two columns that have the information on contain and position present in all pops
 
 	awk '{print $1, $2 }' file > positions_asex
 			
-C.1. With he positions file obtained in B.2.1, common positions between all populations were extracted on the individual pileup files using: 
+3.1. With he positions file obtained in B.2.1, common positions between all populations were extracted on the individual pileup files using: 
 
 	awk 'NR==FNR{a[$1,$2]; next} ($1,$2) in a' positions_asex PS1159.pileup > PS1159.corrected.pileup
 
 Total positions asex: 48704  
 Total positions sex: 122138 
 
-C.1.2 Watterson theta and pi estimation using corrected pileup files
+3.1.2 Watterson theta and pi estimation using corrected pileup files
 
 	perl popoolation_1.2.2/Variance-sliding.pl --measure theta --input Sex_network/p_davidi.corrected.pileup --output Sex_network/p_davidi_WT.file --pool-size 3000 --min-count 2 --min-coverage 10 --max-coverage 80 --window-size 1 --step-size 1 --fastq-type sanger
  
 	perl popoolation_1.2.2/Variance-sliding.pl --measure pi --input Sex_network/p_davidi.corrected.pileup --output Sex_network/P_davidi_pi.file --pool-size 3000 --min-count 2 --min-coverage 10 --max-coverage 80 --window-size 1 --step-size 1 --fastq-type sanger
 
-C.1.3 Remove all “fake/empty” positions, created by population, to only have meaningful results
+3.1.3 Remove all “fake/empty” positions, created by population, to only have meaningful results
 
 	awk 'NR==FNR{a[$1,$2]; next} ($1,$2) in a' positions_asex pi_PS1579 > PS1159.corrected.pi
 
-C.1.4 Obtaining average values for watterson theta and pi 
+3.1.4 Obtaining average values for watterson theta and pi 
 
 	awk '{ total += $5; count++ } END { print total/count }' PS1159.pi
 
@@ -286,7 +286,7 @@ and exporting the resulting file in .nex format.
 
 ### **ESTIMATION OF MUTATION RATES**
 
-Installing accuMulate gave some problems. Remember to add the path of bamtools folder to my path using `export PATH=$PATH:/your/new/path/here`
+NOTE: Installing accuMulate gave some problems. Remember to add the path of bamtools folder to my path using `export PATH=$PATH:/your/new/path/here`
 
 For creating ref pool of PS1159 more reads were added, they had solexa encoding and were transformed to Sanger encoding using: 
 
@@ -297,28 +297,28 @@ All reads coming from PS1159 where merged
 We checked through fastqc to estimate/know wether the conversion worked: the result showed: SANGER :D
 
 Pre-processing as done on part 1 from Population analysis. 
-Trimming
+1. Trimming
 
 	./fastp -i /scratch/a200302/L19G31/SN7640087_3184_L19G31_1_sequence.fq.gz  -I /scratch/a200302/L19G31/SN7640087_3184_L19G31_2_sequence.fq.gz -o /scratch/lvilleg1/L19G31_1 -O /scratch/lvilleg1/L19G31_1 -h /scratch/lvilleg1/report_L19G31
 
-Mapping
+2. Mapping
 
 	bwamem2 mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1159_c12_PS_8\tPL:ILLUMINA\tPU:1" /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.gz /scratch/lvilleg1/MAL_fastp/c12_PS_8_1 /scratch/lvilleg1/MAL_fastp/c12_PS_8_2 > /scratch/lvilleg1/c12_PS_8_bwamem.sam
 
-Convert sam to bam
+3. Convert sam to bam
 
 	ls -1 | sed 's/_bwamem.sam//g' > list-XX
 	while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX
 
-Sort files 
+4. Sort files 
 
 	samtools sort -o /scratch/lvilleg1/MAL/L19G31.sort.bam scratch/lvilleg1/MAL/L19G31.bam #had to be run independently on each file, after a whole day command with parallel was not running
 
-Learn about coverage from sorted files
+4.1. Learn about coverage from sorted files
 
 	ls *.sort.bam | parallel -j 5 'samtools depth {} > {}.sort.bam.depth' 
 
-Remove duplicates using picard
+5. Remove duplicates using picard
 
 
 module purge #remove the current default java version
@@ -326,36 +326,28 @@ module purge #remove the current default java version
 	
 	java -jar /home/lvilleg1/picard/build/libs/picard.jar MarkDuplicatesWithMateCigar I=/scratch/lvilleg1/MAL/c12_PS_86.sort.bam O=c12_PS_86.sort.rmd.bam M=c12_PS_86.sort.bam.metrics VALIDATION_STRINGENCY=SILENT MINIMUM_DISTANCE=300 REMOVE_DUPLICATES=true
 
-Remove low quality reads 
+6. Remove low quality reads 
 
 	ls *.sort.rmd.bam | parallel 'samtools view -q 30 -b {} > {.}.q30'
 
 
 Samtools flagstat can be used to check quality of mapping 
-Indexing files for haplotype caller - maybe ignore
 
-	ls *.sort.rmd.q30.bam | parallel samtools index '{}'
-
-Creating dictionary of reference genome - maybe ignore
-
-	/home/lvilleg1/gatk-4.2.0.0/gatk CreateSequenceDictionary -R /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa
-
-
-To check that the header is correctly stablished
+7. To check that the header is correctly stablished
 
 	samtools view -H c12_JU_100.sort.rmd.bam | grep '^@RG'
 	for f in *q30.bam ; do samtools view -H $f | grep '^@RG'; done
 
 
 
-Merging files for accuMUlate 
+8. Merging files for accuMUlate 
 
 	samtools merge -r partheno_merged.bamL19G31.sort.rmd.q30.bam PS83Q.sort.rmd.q30.bam c12_PS_22.sort.rmd.q30.bam c12_PS_8.sort.rmd.q30.bam c12_PS_84.sort.rmd.q30.bam c12_PS_86.sort.rmd.q30.bam
 
 	c12_JU_100.sort.rmd.q30.bam c12_JU_47.sort.rmd.q30.bam c12_JU_60.sort.rmd.q30.bam c12_JU_71.sort.rmd.q30.bam c12_JU_73.sort.rmd.q30.bam c12_JU_88.sort.rmd.q30.bam
 
 
-Prepare data for accumulate, obtain ini file and obtain GC content using accumulate tools (pre-requisite: pip3.6 install biopython) ALL THINGS THAT NEEDED PYTHON WHERE SUBMITTED TO CHEOPS0 - note on installing boost for accuMUlate: version 1.73 wouldn’t work, I used 1.62
+9. Prepare data for accumulate, obtain ini file and obtain GC content using accumulate tools (pre-requisite: pip3.6 install biopython) ALL THINGS THAT NEEDED PYTHON WHERE SUBMITTED TO CHEOPS0 - note on installing boost for accuMUlate: version 1.73 wouldn’t work, I used 1.62
 
 	module load samtools
 	module load python/3.6.8
@@ -375,7 +367,7 @@ After:
 	python3 /home/lvilleg1/accuMulate-tools/dictionary_converter.py /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa  > /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.dict
 
 
-
+10. Generating windows using bedtools 
 FOLLOWING STEP ON CHEOPS1 WHERE BEDTOOLS IS AVAILABLE
 
 	module load /opt/rrzk/modules/experimental/bedtools/2.29.2 (bedtools on cheops1)
@@ -388,38 +380,42 @@ FOLLOWING STEP ON CHEOPS1 WHERE BEDTOOLS IS AVAILABLE
 When using n=3 ```terminate called after throwing an instance of 'boost::program_options::invalid_option_value'
   what():  the argument ('accuMUlate can't only deal with haploid or diploid ancestral samples') for option is invalid```
 
+11. Troubleshooting to use accuMUlate
+
 Running accumulate: 
 
 A change had to be done on the parsers.cc file from accuMUlate. 
 
-1. As the error was coming from the condition of the if defined in line XXX not being fulfilled, we added a print statement that would show exactly what the error was: 
+11.1. As the error was coming from the condition of the if defined in line XXX not being fulfilled, we added a print statement that would show exactly what the error was: 
 
 ```std::cout << "HOLA SOY LAURA***********: " << start_index; -> prints the start_index that is problematic```
-2. We add a statement that tells the script to ignore this specific index so the if condition can be fulfilled. 
+11.2. We add a statement that tells the script to ignore this specific index so the if condition can be fulfilled. 
 
 ```if (start_index != std::string::npos || start_index == 18446744073709551615) {```
 
 What is 18446744073709551615? Is probably a value defined as a maximum by boost (when not specified differently), one of the tools used by accuMUlate. I think it is plausible that the error is this definition of maximum and not on the data itself as 4 different data sets where tested and the error persisted the same ´18446744073709551615´ 
 
-AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
+11.3. AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
 
-The command implemented for obtaining candidate mutations was: 
-On CHEOPS1
+12. Running accuMUlate to obtain candidate mutations 
+
 
 	parallel -j 6 home/lvilleg1/accuMUlate-0.2.1/build/accuMUlate -c /scratch/lvilleg1/accu_JU/params.JU765.ini -b /scratch/lvilleg1/accu_JU/hermaphroJU765_merged.sort.bam -r /scratch/lvilleg1/accu_JU/propanagrolaimus_ju765.PRJEB32708.WBPS15.genomic.fa -i {} ::: /scratch/lvilleg1/accu_JU/tmp/* > /scratch/lvilleg1/JU765_mutationcandidates #if -o is used to write the output, it goes to the .out file defined on the job batch script. 
 
 
-After obtaining the candidate mutations, filtering stars: 
+13. Filtering according to different parameters to only keep mutations with high support
 
-1. Define coverage range: 
+13.1. Define coverage range: 
 
 With samtools depth we obtain a file with coverage at several positions, on R we can get the summary statistics for knowing the lower and upper range. We used 2 times the standard deviation of the ref pool for its upper limit: sd(file$V3)
 
-Filtering was done following the code: 
-
 The value for $11 changed according to the coverage range defined for the specific data set. 
 
+13.2. Filter coverage range ($11), probability of having a mutation on a given site ($7, $8, $9), filter for unique mutations on a sample (not present in other lines $15), avoid calling a mutation given mismapped reads ($16 and $17), enough reads support the mutation ($18 and $19).
+
 	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96 && $18 >=0.05 && $19 >=0.05) print $0}' > PS1159_mutationcandidates.filter-A.bed
+
+13.2.1. Step by step the decrease in number of putative mutations can be tracked. 
 
 	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575) print $0}' | wc -l 
 
@@ -430,20 +426,22 @@ The value for $11 changed according to the coverage range defined for the specif
 	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96) print $0}' | wc -l
 
 
-2. We obtained the number of callable sites for each of the lines. We used the already obtained depth files from samtools depth filename.bam > filename.depth
+14. WObtain the number of callable sites within the defined coverage region. 
+
+We used the already obtained depth files from ```samtools depth filename.bam > filename.depth```
 
 ```cat L19G31.sort.bam.sort.bam.depth | awk '{if ($3 >=10 && $3 <=50) print $0}' | wc -l ```
 
 
-Obtaining mutation rates and confidence intervals: 
+15. Obtaining mutation rates and confidence intervals: 
 
-1. For mutation rates the following equation was used for each of the mutation lines: 
+15.1. For mutation rates the following equation was used for each of the mutation lines: 
 
 	μ=(called mutations)/(generations∗callable sites)
 
-2. Average of μ for each of the strains was calculated. (Can’t insert equation, basically all μ divided the total number of μ for the strain). 
+15.2. Average of μ for each of the strains was calculated. (Can’t insert equation, basically all μ divided the total number of μ for the strain). 
 
-3. Estimation of confidence intervals: 
+15.3. Estimation of confidence intervals: 
 
 Downloading Bayesian first aid on R
 
@@ -451,7 +449,6 @@ Downloading Bayesian first aid on R
 	devtools::install_github("rasmusab/bayesian_first_aid")
 
 NOTE: as I was working on a Mac computer, an error on installation or jags occurred (package required for bayesian_first_aid). I directly downloaded the package from https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/ and installed it before installing bayesian_first_aid. 
-
 
 
 	JU_sex = c(1.62637E-09, 6.4472E-10, 1.60744E-09, 5.93941E-10, 1.17891E-09)
@@ -468,7 +465,7 @@ Sites refers to the number of callable sites for each reproduction mode. The res
 ### **GENOME ASSEMBLY - using long reads**
 
 
-A. Checking kmer spectra of the raw reads using different tools
+1. Checking kmer spectra of the raw reads using different tools
 
 - BBmap
 
@@ -478,7 +475,7 @@ A. Checking kmer spectra of the raw reads using different tools
 
 ```kat hist -o ES5_kat227 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz```
 
-B. Genome size estimaton
+2. Genome size estimaton
 
 Can be obtained from the header of the output file from bbmap
 Can be obtained from log file of KAT --> was the most accurate one compared to previous reports on the genus
@@ -486,17 +483,17 @@ Can be obtained using the espectra obtained from KAT using tools like Genomescop
 
 Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="PS1146_27mer")```
 
-C. Assembly 
+3. Assembly 
 
-- Flye
+3.1. Flye
 
 ```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
 
-- Hifiasm
+3.2. Hifiasm
 
 ```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
 
-- Wtdbg2
+3.3. Wtdbg2
 
 ```wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g```
 
@@ -506,18 +503,18 @@ C. Assembly
 
 ```samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa```
 
-- Canu - for Hifi reads
+3.4. Canu - for Hifi reads
 
 
 ```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
 
-D. Assesing the quality of the assemblies
+4. Assesing the quality of the assemblies
 
 - GVolante
 
 Used to obtain busco completeness (BUSCO V4), obtain N50 and check for duplications (https://gvolante.riken.jp). Based on these common metrics, the "best" assembly was selected for the following steps.
 
-E. Checking for coverage and contaminations using blobtoolkit
+5. Checking for coverage and contaminations using blobtoolkit
 
 - Some notes on how to install it on CHEOPS: 
 
@@ -601,7 +598,7 @@ While running add busco, the .tsv file is the one obtained while running busco o
 ```./blobtoolkit/blobtools2/blobtools filter --param bestsumorder_phylum--Keys=Proteobacteria,Bacteroidetes,Actinobacteria,Chordata,Uroviricota --fastq HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz  —cov ES5_hifiasm/ES5_hifiasm.mapped.bam ES5_hifiasm/Dataset_blob```
 
 
-F. Purging assembly to purge duplicates in the assembly that migth be the result of highly heterozygous regions and not really duplications (purge_dups was installed using conda) 
+6. Purging assembly to purge duplicates in the assembly that migth be the result of highly heterozygous regions and not really duplications (purge_dups was installed using conda) 
 
 	conda activate minimap_purge
 
@@ -624,7 +621,12 @@ F. Purging assembly to purge duplicates in the assembly that migth be the result
 
 All following steps are performed on the resulting purged assembly without the contaminant reads. 
 
-G. Gene annotation
+7. Gene annotation
+
+1. Repeat masking
+2. Alignment
+3. Prediction
+4. Blast 
 
 
 
