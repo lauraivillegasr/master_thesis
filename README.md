@@ -615,11 +615,10 @@ All following steps are performed on the resulting purged assembly without the c
 
 7.1. Repeat masking - loaded modules on cheops repeat omdeler and repeatmasker
 
-module load repeatmasker/
-```BuildDatabase -name ES5_gene_DB 2filtered_ES5_hifiasm.purged.fa
-RepeatModeler -pa 24 -database ES5_gene_DB
-RepeatClassifier -consensi ES5_gene_DB-families.fa
-RepeatMasker -pa 16 -e ncbi -lib ES5_gene_DB-families.fa 2filtered_ES5_hifiasm.purged.fa```
+	BuildDatabase -name ES5_gene_DB 2filtered_ES5_hifiasm.purged.fa
+	RepeatModeler -pa 24 -database ES5_gene_DB
+	RepeatClassifier -consensi ES5_gene_DB-families.fa
+	RepeatMasker -pa 16 -e ncbi -lib ES5_gene_DB-families.fa 2filtered_ES5_hifiasm.purged.fa
 
 7.2. Alignment
 
