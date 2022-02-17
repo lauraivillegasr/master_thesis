@@ -346,20 +346,20 @@ Samtools flagstat can be used to check quality of mapping
 
 9. Prepare data for accumulate, obtain ini file and obtain GC content using accumulate tools (pre-requisite: pip3.6 install biopython) ALL THINGS THAT NEEDED PYTHON WHERE SUBMITTED TO CHEOPS0 - note on installing boost for accuMUlate: version 1.73 wouldn’t work, I used 1.62
 
-	module load samtools
+```module load samtools
 	module load python/3.6.8
 	cd /scratch/lvilleg1/MAL/Final_preprocessing
 
 	samtools view -H parthenoPS1159_merged.bam | python3 /home/lvilleg1/accuMulate-tools/extract_samples.py PS1159_refpool - >> params.PS1159.ini
-	python3 /home/lvilleg1/accuMulate-tools/GC_content.py /home/lvilleg1/reference_genomes/PS1159_reference_genome >> params.PS1159.ini
+	python3 /home/lvilleg1/accuMulate-tools/GC_content.py /home/lvilleg1/reference_genomes/PS1159_reference_genome >> params.PS1159.ini```
 
 
 NOTE: CHEOPS ONLY allows to install Biopython on python 3 using pip, however, the scripts of accu-tools are written for python 2. Had to do some editing on printing statement (adapt it to python3 - was written in python2):
 
 Before: 
- 	print "{}\t{}".format(*pair)
+ ```print "{}\t{}".format(*pair)```
 After:
- 	print ("{}\t{}".format(*pair))
+ ```print ("{}\t{}".format(*pair))```
 
 	python3 /home/lvilleg1/accuMulate-tools/dictionary_converter.py /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa  > /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.dict
 
@@ -392,7 +392,7 @@ A change had to be done on the parsers.cc file from accuMUlate.
 
 What is 18446744073709551615? Is probably a value defined as a maximum by boost (when not specified differently), one of the tools used by accuMUlate. I think it is plausible that the error is this definition of maximum and not on the data itself as 4 different data sets where tested and the error persisted the same ´18446744073709551615´ 
 
-    11.3. AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
+11.3. AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
 
 12. Running accuMUlate to obtain candidate mutations 
 
