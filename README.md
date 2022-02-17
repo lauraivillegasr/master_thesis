@@ -136,7 +136,7 @@ About coverage ranges: for asex populations 10 - 80 and for sex pops 10-56 (mean
 			
 3. With he positions file obtained in B.2.1, common positions between all populations were extracted on the individual pileup files using: 
 
-```awk 'NR==FNR{a[$1,$2]; next} ($1,$2) in a' positions_asex PS1159.pileup > PS1159.corrected.pileup
+```awk 'NR==FNR{a[$1,$2]; next} ($1,$2) in a' positions_asex PS1159.pileup > PS1159.corrected.pileup```
 
 Total positions asex: 48704  
 Total positions sex: 122138 
