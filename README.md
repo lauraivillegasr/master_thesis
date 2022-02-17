@@ -618,10 +618,38 @@ All following steps are performed on the resulting purged assembly without the c
 
 7. Gene annotation
 
-1. Repeat masking
-2. Alignment
-3. Prediction
-4. Blast 
+7.1. Repeat masking - loaded modules on cheops repeat omdeler and repeatmasker
+
+module load repeatmasker/
+```BuildDatabase -name ES5_gene_DB 2filtered_ES5_hifiasm.purged.fa
+RepeatModeler -pa 24 -database ES5_gene_DB
+RepeatClassifier -consensi ES5_gene_DB-families.fa
+RepeatMasker -pa 16 -e ncbi -lib ES5_gene_DB-families.fa 2filtered_ES5_hifiasm.purged.fa```
+
+7.2. Alignment
+
+For ES5, where RNA-seq was available on the SRR data base, alignment of reads against reference genome wa sperformed using gsnap
+
+```gmap_build -D es5_annotation/ -d genome_index 2filtered_ES5_hifiasm.purged.fa.masked```
+
+```gsnap -t 4 -D es5_annotation/ -d genome_index -A sam -o es5_annotation/ES5-rnaseq.mapped.gsnap.sam ES5_r1.fq ES5_r2.fq```
+
+7.3. Prediction and annotation
+For PS1146 using augustus
+
+```augustus --species=caenorhabditis 2filtered_PS1146_hifiasm.purged.fa.masked  > annotation_trial_PS1146.gff```
+
+For ES5 using braker2
+```braker.pl --species=ES5 --AUGUSTUS_CONFIG_PATH=/scratch/lvilleg1/augustus_config/ --genome=2filtered_ES5_hifiasm.purged.fa.masked --bam=es5_annotation/ES5_RNA_seq_gsnap.mapped.sort.bam```
+
+7.4. Running BUSCO on gVolante for resulting coding sequences.
+
+7.5. Extracting statistics from annotation (from gff/gtf files)
+
+Extracting general stats (number of genes, exons and introns, number of coding sequences, start codons and stop codons) as well as length distribution
+
+```gt gff3 -sort -tidy PS1146_augustus.gtf | gt stat -genelengthdistri -o PS1146_genelengthdist.txt```
+Here, the code only for gene length is shown, exon and intron length were also estimated using the flags ```-exonlengthdistri```and ```-intornlengthdistri```
 
 
 
