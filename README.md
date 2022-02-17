@@ -114,7 +114,7 @@ The sorted final bam files are used as initial input for the tool.
 
 ```java -ea -Xmx7g -jar popoolation2_1201/mpileup2sync.jar --input Sex_network/asexpop.mpileup --output Sex_network/asexpop_java.sync --fastq-type sanger —min-qual 30 --threads 4```
 
-    2.1. Fst estimated on sliding window non overlapping —> to compare populations amongst each other
+2.1. Fst estimated on sliding window non overlapping —> to compare populations amongst each other
 
 ```perl popoolation2_1201/fst-sliding.pl --input Sex_network/asexpop_java.sync  --output Sex_network/asexpop_w1kb_corrected.fst  --suppress-noninformative --min-count 4 --min-coverage 10 --max-coverage 80 --min-covered-fraction 0,5 --window-size 1000 --step-size 1000 --pool-size 3000```
 	
@@ -136,7 +136,7 @@ About coverage ranges: for asex populations 10 - 80 and for sex pops 10-56 (mean
 			
 3. With he positions file obtained in B.2.1, common positions between all populations were extracted on the individual pileup files using: 
 
-	awk 'NR==FNR{a[$1,$2]; next} ($1,$2) in a' positions_asex PS1159.pileup > PS1159.corrected.pileup
+```awk 'NR==FNR{a[$1,$2]; next} ($1,$2) in a' positions_asex PS1159.pileup > PS1159.corrected.pileup
 
 Total positions asex: 48704  
 Total positions sex: 122138 
@@ -283,6 +283,8 @@ Using genious, the allignements per gene where uploaded and concatenated using
 	
 and exporting the resulting file in .nex format. 
 
+15. Upload the nexus format file into SplitsTree and create a network using: ```Networks -> MedianNetwrok``
+
 ### **ESTIMATION OF MUTATION RATES**
 
 NOTE: Installing accuMulate gave some problems. Remember to add the path of bamtools folder to my path using `export PATH=$PATH:/your/new/path/here`
@@ -298,24 +300,24 @@ We checked through fastqc to estimate/know wether the conversion worked: the res
 Pre-processing as done on part 1 from Population analysis. 
 1. Trimming
 
-	./fastp -i /scratch/a200302/L19G31/SN7640087_3184_L19G31_1_sequence.fq.gz  -I /scratch/a200302/L19G31/SN7640087_3184_L19G31_2_sequence.fq.gz -o /scratch/lvilleg1/L19G31_1 -O /scratch/lvilleg1/L19G31_1 -h /scratch/lvilleg1/report_L19G31
+```./fastp -i /scratch/a200302/L19G31/SN7640087_3184_L19G31_1_sequence.fq.gz  -I /scratch/a200302/L19G31/SN7640087_3184_L19G31_2_sequence.fq.gz -o /scratch/lvilleg1/L19G31_1 -O /scratch/lvilleg1/L19G31_1 -h /scratch/lvilleg1/report_L19G31```
 
 2. Mapping
 
-	bwamem2 mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1159_c12_PS_8\tPL:ILLUMINA\tPU:1" /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.gz /scratch/lvilleg1/MAL_fastp/c12_PS_8_1 /scratch/lvilleg1/MAL_fastp/c12_PS_8_2 > /scratch/lvilleg1/c12_PS_8_bwamem.sam
+```bwamem2 mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1159_c12_PS_8\tPL:ILLUMINA\tPU:1" /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.gz /scratch/lvilleg1/MAL_fastp/c12_PS_8_1 /scratch/lvilleg1/MAL_fastp/c12_PS_8_2 > /scratch/lvilleg1/c12_PS_8_bwamem.sam```
 
 3. Convert sam to bam
 
-	ls -1 | sed 's/_bwamem.sam//g' > list-XX
-	while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX
+```ls -1 | sed 's/_bwamem.sam//g' > list-XX```
+```while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX```
 
 4. Sort files 
 
-	samtools sort -o /scratch/lvilleg1/MAL/L19G31.sort.bam scratch/lvilleg1/MAL/L19G31.bam #had to be run independently on each file, after a whole day command with parallel was not running
+```samtools sort -o /scratch/lvilleg1/MAL/L19G31.sort.bam scratch/lvilleg1/MAL/L19G31.bam```
 
 4.1. Learn about coverage from sorted files
 
-	ls *.sort.bam | parallel -j 5 'samtools depth {} > {}.sort.bam.depth' 
+```ls *.sort.bam | parallel -j 5 'samtools depth {} > {}.sort.bam.depth'```
 
 5. Remove duplicates using picard
 
@@ -327,24 +329,20 @@ module purge #remove the current default java version
 
 6. Remove low quality reads 
 
-	ls *.sort.rmd.bam | parallel 'samtools view -q 30 -b {} > {.}.q30'
-
+```ls *.sort.rmd.bam | parallel 'samtools view -q 30 -b {} > {.}.q30'```
 
 Samtools flagstat can be used to check quality of mapping 
 
 7. To check that the header is correctly stablished
 
-	samtools view -H c12_JU_100.sort.rmd.bam | grep '^@RG'
-	for f in *q30.bam ; do samtools view -H $f | grep '^@RG'; done
-
-
+```samtools view -H c12_JU_100.sort.rmd.bam | grep '^@RG'````
+```for f in *q30.bam ; do samtools view -H $f | grep '^@RG'; done```
 
 8. Merging files for accuMUlate 
 
-	samtools merge -r partheno_merged.bamL19G31.sort.rmd.q30.bam PS83Q.sort.rmd.q30.bam c12_PS_22.sort.rmd.q30.bam c12_PS_8.sort.rmd.q30.bam c12_PS_84.sort.rmd.q30.bam c12_PS_86.sort.rmd.q30.bam
+```samtools merge -r partheno_merged.bamL19G31.sort.rmd.q30.bam PS83Q.sort.rmd.q30.bam c12_PS_22.sort.rmd.q30.bam c12_PS_8.sort.rmd.q30.bam c12_PS_84.sort.rmd.q30.bam c12_PS_86.sort.rmd.q30.bam```
 
-	c12_JU_100.sort.rmd.q30.bam c12_JU_47.sort.rmd.q30.bam c12_JU_60.sort.rmd.q30.bam c12_JU_71.sort.rmd.q30.bam c12_JU_73.sort.rmd.q30.bam c12_JU_88.sort.rmd.q30.bam
-
+```c12_JU_100.sort.rmd.q30.bam c12_JU_47.sort.rmd.q30.bam c12_JU_60.sort.rmd.q30.bam c12_JU_71.sort.rmd.q30.bam c12_JU_73.sort.rmd.q30.bam c12_JU_88.sort.rmd.q30.bam```
 
 9. Prepare data for accumulate, obtain ini file and obtain GC content using accumulate tools (pre-requisite: pip3.6 install biopython) ALL THINGS THAT NEEDED PYTHON WHERE SUBMITTED TO CHEOPS0 - note on installing boost for accuMUlate: version 1.73 wouldn’t work, I used 1.62
 
@@ -484,15 +482,15 @@ Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="P
 
 3. Assembly 
 
-    3.1. Flye
+3.1. Flye
 
 ```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
 
-    3.2. Hifiasm
+3.2. Hifiasm
 
 ```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
 
-    3.3. Wtdbg2
+3.3. Wtdbg2
 
 ```wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g```
 
@@ -502,7 +500,7 @@ Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="P
 
 ```samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa```
 
-    3.4. Canu - for Hifi reads
+3.4. Canu - for Hifi reads
 
 
 ```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
@@ -599,7 +597,7 @@ While running add busco, the .tsv file is the one obtained while running busco o
 
 6. Purging assembly to purge duplicates in the assembly that migth be the result of highly heterozygous regions and not really duplications (purge_dups was installed using conda) 
 
-	conda activate minimap_purge
+```conda activate minimap_purge
 
 	pri_asm=2filtered_ES5_hifiasm.fasta
 
