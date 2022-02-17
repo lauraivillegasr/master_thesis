@@ -643,6 +643,7 @@ For ES5 using braker2
 Extracting general stats (number of genes, exons and introns, number of coding sequences, start codons and stop codons) as well as length distribution
 
 ```gt gff3 -sort -tidy PS1146_augustus.gtf | gt stat -genelengthdistri -o PS1146_genelengthdist.txt```
+
 Here, the code only for gene length is shown, exon and intron length were also estimated using the flags ```-exonlengthdistri```and ```-intornlengthdistri```
 
 
