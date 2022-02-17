@@ -595,25 +595,19 @@ While running add busco, the .tsv file is the one obtained while running busco o
 
 6. Purging assembly to purge duplicates in the assembly that migth be the result of highly heterozygous regions and not really duplications (purge_dups was installed using conda) 
 
-```conda activate minimap_purge
-
-pri_asm=2filtered_ES5_hifiasm.fasta
-
-for i in $(cat pb.fofn)
-do
-minimap2 -xasm20 $pri_asm $i | gzip -c - > $i.paf.gz
-done
-pbcstat *.paf.gz
-calcuts PB.stat > cutoffs 2>calcults.log
-
-split_fa $pri_asm > $pri_asm.split
-minimap2 -xasm5 -DP $pri_asm.split $pri_asm.split | gzip -c - > $pri_asm.split.self.paf.gz
-
-purge_dups -2 -T cutoffs -c PB.base.cov $pri_asm.split.self.paf.gz > dups.bed 2> purge_dups.log
-
-get_seqs -e dups.bed $pri_asm```
+	conda activate minimap_purge
+	pri_asm=2filtered_ES5_hifiasm.fasta
+	for i in $(cat pb.fofn)
+	do
+	minimap2 -xasm20 $pri_asm $i | gzip -c - > $i.paf.gz
+	done
+	pbcstat *.paf.gz
+	calcuts PB.stat > cutoffs 2>calcults.log
+	split_fa $pri_asm > $pri_asm.split
+	minimap2 -xasm5 -DP $pri_asm.split $pri_asm.split | gzip -c - > $pri_asm.split.self.paf.gz
+	purge_dups -2 -T cutoffs -c PB.base.cov $pri_asm.split.self.paf.gz > dups.bed 2> purge_dups.log
+	get_seqs -e dups.bed $pri_asm
 	
-
 
 All following steps are performed on the resulting purged assembly without the contaminant reads. 
 
