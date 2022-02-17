@@ -233,19 +233,19 @@ If not enough reads, or not at all are present in the define region (for example
 
 DL137G2 can be change in each case for the name of folder/strain
 
-    12.2 All lists where transferred to excel as one column, manual editing to just have the information on gene location was done using find&replace, then the duplicate function was used and only those positions present in ALL columns were kept and a new file was created: 
+12.2 All lists where transferred to excel as one column, manual editing to just have the information on gene location was done using find&replace, then the duplicate function was used and only those positions present in ALL columns were kept and a new file was created: 
 
 375_genes
 
-    12.3 With a loop using the file created in 12.2, I copied all gene files from each strain to a new folder 
+12.3 With a loop using the file created in 12.2, I copied all gene files from each strain to a new folder 
 
 ```while read f; do cp try/$f* try_2/$f.DL137G2; done < 375_genes```
 
-    12.4 Put together all the files from one gene into one file for the mafft alignment
+12.4 Put together all the files from one gene into one file for the mafft alignment
 
  ```while read f; do cat $f* >> $f"_for_mafft" ; done < 375_genes```
 
-    12.5 Check some files to make sure that you have all 7 headers from the 7 strains 
+12.5 Check some files to make sure that you have all 7 headers from the 7 strains 
 
 ```ls *mafft | head -n 10```
 
@@ -397,22 +397,22 @@ What is 18446744073709551615? Is probably a value defined as a maximum by boost 
 12. Running accuMUlate to obtain candidate mutations 
 
 
-	parallel -j 6 home/lvilleg1/accuMUlate-0.2.1/build/accuMUlate -c /scratch/lvilleg1/accu_JU/params.JU765.ini -b /scratch/lvilleg1/accu_JU/hermaphroJU765_merged.sort.bam -r /scratch/lvilleg1/accu_JU/propanagrolaimus_ju765.PRJEB32708.WBPS15.genomic.fa -i {} ::: /scratch/lvilleg1/accu_JU/tmp/* > /scratch/lvilleg1/JU765_mutationcandidates #if -o is used to write the output, it goes to the .out file defined on the job batch script. 
+```parallel -j 6 home/lvilleg1/accuMUlate-0.2.1/build/accuMUlate -c /scratch/lvilleg1/accu_JU/params.JU765.ini -b /scratch/lvilleg1/accu_JU/hermaphroJU765_merged.sort.bam -r /scratch/lvilleg1/accu_JU/propanagrolaimus_ju765.PRJEB32708.WBPS15.genomic.fa -i {} ::: /scratch/lvilleg1/accu_JU/tmp/* > /scratch/lvilleg1/JU765_mutationcandidates``` 
 
 
 13. Filtering according to different parameters to only keep mutations with high support
 
-    13.1. Define coverage range: 
+13.1. Define coverage range: 
 
 With samtools depth we obtain a file with coverage at several positions, on R we can get the summary statistics for knowing the lower and upper range. We used 2 times the standard deviation of the ref pool for its upper limit: sd(file$V3)
 
 The value for $11 changed according to the coverage range defined for the specific data set. 
 
-    13.2. Filter coverage range ($11), probability of having a mutation on a given site ($7, $8, $9), filter for unique mutations on a sample (not present in other lines $15), avoid calling a mutation given mismapped reads ($16 and $17), enough reads support the mutation ($18 and $19).
+13.2. Filter coverage range ($11), probability of having a mutation on a given site ($7, $8, $9), filter for unique mutations on a sample (not present in other lines $15), avoid calling a mutation given mismapped reads ($16 and $17), enough reads support the mutation ($18 and $19).
 
-	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96 && $18 >=0.05 && $19 >=0.05) print $0}' > PS1159_mutationcandidates.filter-A.bed
+```cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96 && $18 >=0.05 && $19 >=0.05) print $0}' > PS1159_mutationcandidates.filter-A.bed```
 
-    13.2.1. Step by step the decrease in number of putative mutations can be tracked. 
+13.2.1. Step by step the decrease in number of putative mutations can be tracked. 
 
 	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575) print $0}' | wc -l 
 
@@ -423,7 +423,7 @@ The value for $11 changed according to the coverage range defined for the specif
 	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96) print $0}' | wc -l
 
 
-14. WObtain the number of callable sites within the defined coverage region. 
+14. Obtain the number of callable sites within the defined coverage region. 
 
 We used the already obtained depth files from ```samtools depth filename.bam > filename.depth```
 
