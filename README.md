@@ -17,10 +17,10 @@ make separate CHEOPS software accessible:
 
 2. Mapping to reference genome via bwa mem
 
-	2.1 Create index for mapping: 
+2.1 Create index for mapping: 
 ```bwamem2 index ref.fa```
 
-	2.2 Mapping: 
+2.2 Mapping: 
 ```bwamem2 mem -M -t 30 -R “@RG\tID:sample-id\tSM:sample\tPL:ILLUMINA\tPU:1” /path/to/reference-genome.fasta out.forward.fastq out.reverse.fastq > sample-1_bwamem.sam``` 
 
 
