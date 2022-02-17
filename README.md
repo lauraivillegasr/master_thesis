@@ -611,7 +611,8 @@ While running add busco, the .tsv file is the one obtained while running busco o
 
 	purge_dups -2 -T cutoffs -c PB.base.cov $pri_asm.split.self.paf.gz > dups.bed 2> purge_dups.log
 
-	get_seqs -e dups.bed $pri_asm
+	get_seqs -e dups.bed $pri_asm```
+	
 
 
 All following steps are performed on the resulting purged assembly without the contaminant reads. 
