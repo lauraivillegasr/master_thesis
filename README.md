@@ -646,6 +646,8 @@ Extracting general stats (number of genes, exons and introns, number of coding s
 
 Here, the code only for gene length is shown, exon and intron length were also estimated using the flags ```-exonlengthdistri```and ```-intornlengthdistri```
 
+8. Close similarity between assemblies 
 
+Using D-Genies the assembled genomes were compared to the previously available assemblies of either the same species or a closely related one to compare the genomes in terms of repetitions, breaks and inversions. 
 
 
