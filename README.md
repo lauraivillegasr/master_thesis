@@ -2,7 +2,7 @@
 
 Commands implemented during my master thesis on the topic understanding genomic features of parthenogenetic triploid nematodes
 
-Versiono f implemented tools:
+Version of implemented tools:
 
 
 <img width="256" alt="image" src="https://user-images.githubusercontent.com/77828955/156348829-25522d37-7b4f-4bf9-b5b5-3e468c434bff.png">
