@@ -7,6 +7,370 @@ Version of implemented tools:
 
 <img width="256" alt="image" src="https://user-images.githubusercontent.com/77828955/156348829-25522d37-7b4f-4bf9-b5b5-3e468c434bff.png">
 
+### **GENOME ASSEMBLY - using long reads**
+
+
+1. Checking kmer spectra of the raw reads using different tools
+
+- BBmap
+
+```bbmap/kmercountexact.sh qin=33 k=27 in=HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz khist=PS1146_bbmaphistk27.txt peaks=PS1146_bbmaopeaks27.txt -Xmx3600M```
+
+- KAT - K-mer Analysis Toolkit
+
+```kat hist -o ES5_kat227 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz```
+
+2. Genome size estimaton
+
+Can be obtained from the header of the output file from bbmap
+Can be obtained from log file of KAT --> was the most accurate one compared to previous reports on the genus
+Can be obtained using the espectra obtained from KAT using tools like Genomescope (online http://qb.cshl.edu/genomescope/) and findGSE (R based)
+
+Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="PS1146_27mer")```
+
+3. Assembly 
+
+3.1. Flye
+
+```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
+
+3.2. Hifiasm
+
+```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
+
+3.3. Wtdbg2
+
+```wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g```
+
+```wtpoa-cns -t 16 -i PS1146_redbean.ctg.lay.gz -fo PS1146_redbean.raw.fa```
+
+```minimap2 -t16 -ax map-pb -r2k PS1146_redbean.raw.fa HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz | samtools sort -@4 >PS1146_redbean.bam```
+
+```samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa```
+
+3.4. Canu - for Hifi reads
+
+
+```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
+
+4. Assesing the quality of the assemblies
+
+- GVolante
+
+Used to obtain busco completeness (BUSCO V4), obtain N50 and check for duplications (https://gvolante.riken.jp). Based on these common metrics, the "best" assembly was selected for the following steps.
+
+5. Checking for coverage and contaminations using blobtoolkit
+
+- Some notes on how to install it on CHEOPS: 
+
+	module purge
+	module load miniconda
+	eval "$(conda shell.bash hook)"
+
+
+Use Conda to install remaining dependencies: 
+
+	conda create -n btk_env -c conda-forge -y python=3.6 docopt psutil pyyaml ujson tqdm nodejs=10 yq;
+	conda activate btk_env;
+	conda install -c bioconda -y pysam seqtk;
+	conda install -c conda-forge -y geckodriver selenium pyvirtualdisplay;
+	pip install fastjsonschema;
+	mkdir -p ~/blobtoolkit;
+	cd ~/blobtoolkit;
+	git clone https://github.com/blobtoolkit/blobtools2;
+	git clone https://github.com/blobtoolkit/viewer;
+	git clone https://github.com/blobtoolkit/specification;
+	git clone https://github.com/blobtoolkit/insdc-pipeline;
+	cd viewer;
+	npm install;
+	cd ..;
+
+inside the btk_env environment in the folder /blobtoolkit/viewer:
+
+```npm audit fix```
+
+and then inside blobtoolkit/blobtools2: 
+
+```do pip install -r requirements.txt --ignore-installed certifi```
+
+
+- Creating a data base adding coverage, hits and BUSCO completness results (all steps are done after activating the conda environment btk_env)
+
+* Creating the database
+
+```./blobtoolkit/blobtools2/blobtools create --fasta ES5_hifiasm/ES5_primary_contigs_hifiasm.fa ES5_hifiasm/Dataset_blob/```
+
+* Adding BUSCO results
+
+```./blobtoolkit/blobtools2/blobtools add --busco blobtools_info/ES5_hifiasm.busco.nematoda_odb10.tsv blobtools_info/ES5_hifiasm```
+
+While running add busco, the .tsv file is the one obtained while running busco on gvolante. It requires bit of manual editing, like changing the contigs names so they match that of the assembly and removing missing genes so all contigs match the identifiers defined while creating the database.
+
+* Running blast to obtain hits that will be added to the database
+
+		blastn -db blobtools_info/nt/nt \
+       	-query ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
+       	-outfmt '6 qseqid staxids bitscore std' \
+       	-max_target_seqs 10 \
+       	-max_hsps 1 \
+       	-evalue 1e-25 \
+       	-num_threads 32 \
+       	-out ES5_hifiasm.ncbi.blastn.out
+
+* Running minimap2 to obtain a mapping of the reads against the assembly and check coverage
+
+		minimap2 -ax map-hifi \
+        	 -t 32 ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
+        	 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz \
+		| samtools sort -@32 -O BAM -o ES5_hifiasm.mapped.bam -
+
+* Adding all the generated files to the databse
+
+
+		./blobtoolkit/blobtools2/blobtools add --taxrule bestsumorder \
+		--taxdump /blobtools_info/taxdump/ \
+		--cov filtered_ES5_hifiasm.mapped.bam \
+		--hits filtered_ES5_hifiasm.ncbi.blastn.out \
+		Dataset_blob
+
+* Visualizing results (not done on cheops - motoko)
+
+```./blobtoolkit/blobtools2/blobtools view --remote Dataset_blob``` 
+
+
+* Filtering assembly and raw reads according to taxa that has highly different GC content or is bacteria we would expect as contamination from the media
+
+```./blobtoolkit/blobtools2/blobtools filter --param bestsumorder_phylum--Keys=Proteobacteria,Bacteroidetes,Actinobacteria,Chordata,Uroviricota --fastq HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz  —cov ES5_hifiasm/ES5_hifiasm.mapped.bam ES5_hifiasm/Dataset_blob```
+
+
+6. Purging assembly to purge duplicates in the assembly that migth be the result of highly heterozygous regions and not really duplications (purge_dups was installed using conda) 
+
+	conda activate minimap_purge
+	pri_asm=2filtered_ES5_hifiasm.fasta
+	for i in $(cat pb.fofn)
+	do
+	minimap2 -xasm20 $pri_asm $i | gzip -c - > $i.paf.gz
+	done
+	pbcstat *.paf.gz
+	calcuts PB.stat > cutoffs 2>calcults.log
+	split_fa $pri_asm > $pri_asm.split
+	minimap2 -xasm5 -DP $pri_asm.split $pri_asm.split | gzip -c - > $pri_asm.split.self.paf.gz
+	purge_dups -2 -T cutoffs -c PB.base.cov $pri_asm.split.self.paf.gz > dups.bed 2> purge_dups.log
+	get_seqs -e dups.bed $pri_asm
+	
+
+All following steps are performed on the resulting purged assembly without the contaminant reads. 
+
+7. Gene annotation
+
+7.1. Repeat masking - loaded modules on cheops repeat omdeler and repeatmasker
+
+	BuildDatabase -name ES5_gene_DB 2filtered_ES5_hifiasm.purged.fa
+	RepeatModeler -pa 24 -database ES5_gene_DB
+	RepeatClassifier -consensi ES5_gene_DB-families.fa
+	RepeatMasker -pa 16 -e ncbi -lib ES5_gene_DB-families.fa 2filtered_ES5_hifiasm.purged.fa
+
+7.2. Alignment
+
+For ES5, where RNA-seq was available on the SRR data base, alignment of reads against reference genome wa sperformed using gsnap
+
+```gmap_build -D es5_annotation/ -d genome_index 2filtered_ES5_hifiasm.purged.fa.masked```
+
+```gsnap -t 4 -D es5_annotation/ -d genome_index -A sam -o es5_annotation/ES5-rnaseq.mapped.gsnap.sam ES5_r1.fq ES5_r2.fq```
+
+7.3. Prediction and annotation
+For PS1146 using augustus
+
+```augustus --species=caenorhabditis 2filtered_PS1146_hifiasm.purged.fa.masked  > annotation_trial_PS1146.gff```
+
+For ES5 using braker2
+```braker.pl --species=ES5 --AUGUSTUS_CONFIG_PATH=/scratch/lvilleg1/augustus_config/ --genome=2filtered_ES5_hifiasm.purged.fa.masked --bam=es5_annotation/ES5_RNA_seq_gsnap.mapped.sort.bam```
+
+7.4. Running BUSCO on gVolante for resulting coding sequences.
+
+7.5. Extracting statistics from annotation (from gff/gtf files)
+
+Extracting general stats (number of genes, exons and introns, number of coding sequences, start codons and stop codons) as well as length distribution
+
+```gt gff3 -sort -tidy PS1146_augustus.gtf | gt stat -genelengthdistri -o PS1146_genelengthdist.txt```
+
+Here, the code only for gene length is shown, exon and intron length were also estimated using the flags ```-exonlengthdistri```and ```-intornlengthdistri```
+
+8. Close similarity between assemblies 
+
+Using D-Genies the assembled genomes were compared to the previously available assemblies of either the same species or a closely related one to compare the genomes in terms of repetitions, breaks and inversions. 
+
+### **ESTIMATION OF MUTATION RATES**
+
+NOTE: Installing accuMulate gave some problems. Remember to add the path of bamtools folder to my path using `export PATH=$PATH:/your/new/path/here`
+
+For creating ref pool of PS1159 more reads were added, they had solexa encoding and were transformed to Sanger encoding using: 
+
+	cat 110815_0133_D0738ACXX_5_SA-PE-005_1.solfastq | seqret -filter -auto -sformat fastq-solexa -osformat fastq-sanger -out PS1159_5_1.fastq
+
+All reads coming from PS1159 where merged
+
+We checked through fastqc to estimate/know wether the conversion worked: the result showed: SANGER :D
+
+Pre-processing as done on part 1 from Population analysis. 
+1. Trimming
+
+```./fastp -i /scratch/a200302/L19G31/SN7640087_3184_L19G31_1_sequence.fq.gz  -I /scratch/a200302/L19G31/SN7640087_3184_L19G31_2_sequence.fq.gz -o /scratch/lvilleg1/L19G31_1 -O /scratch/lvilleg1/L19G31_1 -h /scratch/lvilleg1/report_L19G31```
+
+2. Mapping
+
+```bwamem2 mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1159_c12_PS_8\tPL:ILLUMINA\tPU:1" /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.gz /scratch/lvilleg1/MAL_fastp/c12_PS_8_1 /scratch/lvilleg1/MAL_fastp/c12_PS_8_2 > /scratch/lvilleg1/c12_PS_8_bwamem.sam```
+
+3. Convert sam to bam
+
+```ls -1 | sed 's/_bwamem.sam//g' > list-XX```
+```while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX```
+
+4. Sort files 
+
+```samtools sort -o /scratch/lvilleg1/MAL/L19G31.sort.bam scratch/lvilleg1/MAL/L19G31.bam```
+
+4.1. Learn about coverage from sorted files
+
+```ls *.sort.bam | parallel -j 5 'samtools depth {} > {}.sort.bam.depth'```
+
+5. Remove duplicates using picard
+
+
+module purge #remove the current default java version
+	module load openjdk/1.8.0_202 #need to be loaded, otherwise it tries to run with the incorrect java version and won’t work 
+	
+	java -jar /home/lvilleg1/picard/build/libs/picard.jar MarkDuplicatesWithMateCigar I=/scratch/lvilleg1/MAL/c12_PS_86.sort.bam O=c12_PS_86.sort.rmd.bam M=c12_PS_86.sort.bam.metrics VALIDATION_STRINGENCY=SILENT MINIMUM_DISTANCE=300 REMOVE_DUPLICATES=true
+
+6. Remove low quality reads 
+
+```ls *.sort.rmd.bam | parallel 'samtools view -q 30 -b {} > {.}.q30'```
+
+Samtools flagstat can be used to check quality of mapping 
+
+7. To check that the header is correctly stablished
+
+```samtools view -H c12_JU_100.sort.rmd.bam | grep '^@RG'````
+```for f in *q30.bam ; do samtools view -H $f | grep '^@RG'; done```
+
+8. Merging files for accuMUlate 
+
+```samtools merge -r partheno_merged.bamL19G31.sort.rmd.q30.bam PS83Q.sort.rmd.q30.bam c12_PS_22.sort.rmd.q30.bam c12_PS_8.sort.rmd.q30.bam c12_PS_84.sort.rmd.q30.bam c12_PS_86.sort.rmd.q30.bam```
+
+```c12_JU_100.sort.rmd.q30.bam c12_JU_47.sort.rmd.q30.bam c12_JU_60.sort.rmd.q30.bam c12_JU_71.sort.rmd.q30.bam c12_JU_73.sort.rmd.q30.bam c12_JU_88.sort.rmd.q30.bam```
+
+9. Prepare data for accumulate, obtain ini file and obtain GC content using accumulate tools (pre-requisite: pip3.6 install biopython) ALL THINGS THAT NEEDED PYTHON WHERE SUBMITTED TO CHEOPS0 - note on installing boost for accuMUlate: version 1.73 wouldn’t work, I used 1.62
+
+	module load samtools
+	module load python/3.6.8
+	cd /scratch/lvilleg1/MAL/Final_preprocessing
+	samtools view -H parthenoPS1159_merged.bam | python3 /home/lvilleg1/accuMulate-tools/extract_samples.py PS1159_refpool - >> params.PS1159.ini
+	python3 /home/lvilleg1/accuMulate-tools/GC_content.py /home/lvilleg1/reference_genomes/PS1159_reference_genome >> params.PS1159.ini
+
+NOTE: CHEOPS ONLY allows to install Biopython on python 3 using pip, however, the scripts of accu-tools are written for python 2. Had to do some editing on printing statement (adapt it to python3 - was written in python2):
+
+Before: 
+ ```print "{}\t{}".format(*pair)```
+After:
+ ```print ("{}\t{}".format(*pair))```
+
+	python3 /home/lvilleg1/accuMulate-tools/dictionary_converter.py /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa  > /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.dict
+
+
+10. Generating windows using bedtools 
+FOLLOWING STEP ON CHEOPS1 WHERE BEDTOOLS IS AVAILABLE
+
+	module load /opt/rrzk/modules/experimental/bedtools/2.29.2 (bedtools on cheops1)
+	mkdir -p /scratch/lvilleg1/MAL/Final_preprocessing/tmp
+
+
+	bedtools makewindows -g /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.accu.dict -w 100000 | split -l 1 - /scratch/lvilleg1/MAL/Final_preprocessing/tmp
+
+
+When using n=3 ```terminate called after throwing an instance of 'boost::program_options::invalid_option_value'
+  what():  the argument ('accuMUlate can't only deal with haploid or diploid ancestral samples') for option is invalid```
+
+11. Troubleshooting to use accuMUlate
+
+Running accumulate: 
+
+A change had to be done on the parsers.cc file from accuMUlate. 
+
+    11.1. As the error was coming from the condition of the if defined in line XXX not being fulfilled, we added a print statement that would show exactly what the error was: 
+
+```std::cout << "HOLA SOY LAURA***********: " << start_index; -> prints the start_index that is problematic```
+    11.2. We add a statement that tells the script to ignore this specific index so the if condition can be fulfilled. 
+
+```if (start_index != std::string::npos || start_index == 18446744073709551615) {```
+
+What is 18446744073709551615? Is probably a value defined as a maximum by boost (when not specified differently), one of the tools used by accuMUlate. I think it is plausible that the error is this definition of maximum and not on the data itself as 4 different data sets where tested and the error persisted the same ´18446744073709551615´ 
+
+11.3. AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
+
+12. Running accuMUlate to obtain candidate mutations 
+
+
+```parallel -j 6 home/lvilleg1/accuMUlate-0.2.1/build/accuMUlate -c /scratch/lvilleg1/accu_JU/params.JU765.ini -b /scratch/lvilleg1/accu_JU/hermaphroJU765_merged.sort.bam -r /scratch/lvilleg1/accu_JU/propanagrolaimus_ju765.PRJEB32708.WBPS15.genomic.fa -i {} ::: /scratch/lvilleg1/accu_JU/tmp/* > /scratch/lvilleg1/JU765_mutationcandidates``` 
+
+
+13. Filtering according to different parameters to only keep mutations with high support
+
+13.1. Define coverage range: 
+
+With samtools depth we obtain a file with coverage at several positions, on R we can get the summary statistics for knowing the lower and upper range. We used 2 times the standard deviation of the ref pool for its upper limit: sd(file$V3)
+
+The value for $11 changed according to the coverage range defined for the specific data set. 
+
+13.2. Filter coverage range ($11), probability of having a mutation on a given site ($7, $8, $9), filter for unique mutations on a sample (not present in other lines $15), avoid calling a mutation given mismapped reads ($16 and $17), enough reads support the mutation ($18 and $19).
+
+```cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96 && $18 >=0.05 && $19 >=0.05) print $0}' > PS1159_mutationcandidates.filter-A.bed```
+
+13.2.1. Step by step the decrease in number of putative mutations can be tracked. 
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575) print $0}' | wc -l 
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0) print $0}' | wc -l
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9) print $0}' | wc -l
+
+	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96) print $0}' | wc -l
+
+
+14. Obtain the number of callable sites within the defined coverage region. 
+
+We used the already obtained depth files from ```samtools depth filename.bam > filename.depth```
+
+```cat L19G31.sort.bam.sort.bam.depth | awk '{if ($3 >=10 && $3 <=50) print $0}' | wc -l ```
+
+
+15. Obtaining mutation rates and confidence intervals: 
+
+    15.1. For mutation rates the following equation was used for each of the mutation lines: 
+
+	μ=(called mutations)/(generations∗callable sites)
+
+    15.2. Average of μ for each of the strains was calculated. (Can’t insert equation, basically all μ divided the total number of μ for the strain). 
+
+    15.3. Estimation of confidence intervals: 
+
+Downloading Bayesian first aid on R
+
+	install.packages("devtools")
+	devtools::install_github("rasmusab/bayesian_first_aid")
+
+NOTE: as I was working on a Mac computer, an error on installation or jags occurred (package required for bayesian_first_aid). I directly downloaded the package from https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/ and installed it before installing bayesian_first_aid. 
+
+
+	JU_sex = c(1.62637E-09, 6.4472E-10, 1.60744E-09, 5.93941E-10, 1.17891E-09)
+	PS_asex =c(9.64506E-10, 6.94089E-10, 4.08937E-10, 7.2004E-10, 7.9846E-10)
+	comparing= c(9.41896E-10, 5.67965E-10)
+	sites = c(278665301,374228169)
+	bayes.poisson.test(comparing, sites)
+	plot(bayes.poisson.test(comparing, sites))
+
+Sites refers to the number of callable sites for each reproduction mode. The result of this analysis tells us how different our groups are and provides confidence intervals of the values: a lower limit and an upper limit.
+
+
 
 ### **POPULATION ANALYSIS**
 
@@ -290,370 +654,4 @@ Using genious, the allignements per gene where uploaded and concatenated using
 and exporting the resulting file in .nex format. 
 
 15. Upload the nexus format file into SplitsTree and create a network using: ```Networks -> MedianNetwrok``
-
-### **ESTIMATION OF MUTATION RATES**
-
-NOTE: Installing accuMulate gave some problems. Remember to add the path of bamtools folder to my path using `export PATH=$PATH:/your/new/path/here`
-
-For creating ref pool of PS1159 more reads were added, they had solexa encoding and were transformed to Sanger encoding using: 
-
-	cat 110815_0133_D0738ACXX_5_SA-PE-005_1.solfastq | seqret -filter -auto -sformat fastq-solexa -osformat fastq-sanger -out PS1159_5_1.fastq
-
-All reads coming from PS1159 where merged
-
-We checked through fastqc to estimate/know wether the conversion worked: the result showed: SANGER :D
-
-Pre-processing as done on part 1 from Population analysis. 
-1. Trimming
-
-```./fastp -i /scratch/a200302/L19G31/SN7640087_3184_L19G31_1_sequence.fq.gz  -I /scratch/a200302/L19G31/SN7640087_3184_L19G31_2_sequence.fq.gz -o /scratch/lvilleg1/L19G31_1 -O /scratch/lvilleg1/L19G31_1 -h /scratch/lvilleg1/report_L19G31```
-
-2. Mapping
-
-```bwamem2 mem -M -t 30 -R "@RG\tID:ASEX\tSM:PS1159_c12_PS_8\tPL:ILLUMINA\tPU:1" /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa.gz /scratch/lvilleg1/MAL_fastp/c12_PS_8_1 /scratch/lvilleg1/MAL_fastp/c12_PS_8_2 > /scratch/lvilleg1/c12_PS_8_bwamem.sam```
-
-3. Convert sam to bam
-
-```ls -1 | sed 's/_bwamem.sam//g' > list-XX```
-```while read f; do samtools view -b $f"_bwamem.sam" > $f".bam" ;done < list-XX```
-
-4. Sort files 
-
-```samtools sort -o /scratch/lvilleg1/MAL/L19G31.sort.bam scratch/lvilleg1/MAL/L19G31.bam```
-
-4.1. Learn about coverage from sorted files
-
-```ls *.sort.bam | parallel -j 5 'samtools depth {} > {}.sort.bam.depth'```
-
-5. Remove duplicates using picard
-
-
-module purge #remove the current default java version
-	module load openjdk/1.8.0_202 #need to be loaded, otherwise it tries to run with the incorrect java version and won’t work 
-	
-	java -jar /home/lvilleg1/picard/build/libs/picard.jar MarkDuplicatesWithMateCigar I=/scratch/lvilleg1/MAL/c12_PS_86.sort.bam O=c12_PS_86.sort.rmd.bam M=c12_PS_86.sort.bam.metrics VALIDATION_STRINGENCY=SILENT MINIMUM_DISTANCE=300 REMOVE_DUPLICATES=true
-
-6. Remove low quality reads 
-
-```ls *.sort.rmd.bam | parallel 'samtools view -q 30 -b {} > {.}.q30'```
-
-Samtools flagstat can be used to check quality of mapping 
-
-7. To check that the header is correctly stablished
-
-```samtools view -H c12_JU_100.sort.rmd.bam | grep '^@RG'````
-```for f in *q30.bam ; do samtools view -H $f | grep '^@RG'; done```
-
-8. Merging files for accuMUlate 
-
-```samtools merge -r partheno_merged.bamL19G31.sort.rmd.q30.bam PS83Q.sort.rmd.q30.bam c12_PS_22.sort.rmd.q30.bam c12_PS_8.sort.rmd.q30.bam c12_PS_84.sort.rmd.q30.bam c12_PS_86.sort.rmd.q30.bam```
-
-```c12_JU_100.sort.rmd.q30.bam c12_JU_47.sort.rmd.q30.bam c12_JU_60.sort.rmd.q30.bam c12_JU_71.sort.rmd.q30.bam c12_JU_73.sort.rmd.q30.bam c12_JU_88.sort.rmd.q30.bam```
-
-9. Prepare data for accumulate, obtain ini file and obtain GC content using accumulate tools (pre-requisite: pip3.6 install biopython) ALL THINGS THAT NEEDED PYTHON WHERE SUBMITTED TO CHEOPS0 - note on installing boost for accuMUlate: version 1.73 wouldn’t work, I used 1.62
-
-	module load samtools
-	module load python/3.6.8
-	cd /scratch/lvilleg1/MAL/Final_preprocessing
-	samtools view -H parthenoPS1159_merged.bam | python3 /home/lvilleg1/accuMulate-tools/extract_samples.py PS1159_refpool - >> params.PS1159.ini
-	python3 /home/lvilleg1/accuMulate-tools/GC_content.py /home/lvilleg1/reference_genomes/PS1159_reference_genome >> params.PS1159.ini
-
-NOTE: CHEOPS ONLY allows to install Biopython on python 3 using pip, however, the scripts of accu-tools are written for python 2. Had to do some editing on printing statement (adapt it to python3 - was written in python2):
-
-Before: 
- ```print "{}\t{}".format(*pair)```
-After:
- ```print ("{}\t{}".format(*pair))```
-
-	python3 /home/lvilleg1/accuMulate-tools/dictionary_converter.py /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.fa  > /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.dict
-
-
-10. Generating windows using bedtools 
-FOLLOWING STEP ON CHEOPS1 WHERE BEDTOOLS IS AVAILABLE
-
-	module load /opt/rrzk/modules/experimental/bedtools/2.29.2 (bedtools on cheops1)
-	mkdir -p /scratch/lvilleg1/MAL/Final_preprocessing/tmp
-
-
-	bedtools makewindows -g /home/lvilleg1/reference_genomes/panagrolaimus_ps1159.PRJEB32708.WBPS15.genomic.accu.dict -w 100000 | split -l 1 - /scratch/lvilleg1/MAL/Final_preprocessing/tmp
-
-
-When using n=3 ```terminate called after throwing an instance of 'boost::program_options::invalid_option_value'
-  what():  the argument ('accuMUlate can't only deal with haploid or diploid ancestral samples') for option is invalid```
-
-11. Troubleshooting to use accuMUlate
-
-Running accumulate: 
-
-A change had to be done on the parsers.cc file from accuMUlate. 
-
-    11.1. As the error was coming from the condition of the if defined in line XXX not being fulfilled, we added a print statement that would show exactly what the error was: 
-
-```std::cout << "HOLA SOY LAURA***********: " << start_index; -> prints the start_index that is problematic```
-    11.2. We add a statement that tells the script to ignore this specific index so the if condition can be fulfilled. 
-
-```if (start_index != std::string::npos || start_index == 18446744073709551615) {```
-
-What is 18446744073709551615? Is probably a value defined as a maximum by boost (when not specified differently), one of the tools used by accuMUlate. I think it is plausible that the error is this definition of maximum and not on the data itself as 4 different data sets where tested and the error persisted the same ´18446744073709551615´ 
-
-11.3. AccuMUlate was then compiled again with the new “version” of the parsers.cc file.
-
-12. Running accuMUlate to obtain candidate mutations 
-
-
-```parallel -j 6 home/lvilleg1/accuMUlate-0.2.1/build/accuMUlate -c /scratch/lvilleg1/accu_JU/params.JU765.ini -b /scratch/lvilleg1/accu_JU/hermaphroJU765_merged.sort.bam -r /scratch/lvilleg1/accu_JU/propanagrolaimus_ju765.PRJEB32708.WBPS15.genomic.fa -i {} ::: /scratch/lvilleg1/accu_JU/tmp/* > /scratch/lvilleg1/JU765_mutationcandidates``` 
-
-
-13. Filtering according to different parameters to only keep mutations with high support
-
-13.1. Define coverage range: 
-
-With samtools depth we obtain a file with coverage at several positions, on R we can get the summary statistics for knowing the lower and upper range. We used 2 times the standard deviation of the ref pool for its upper limit: sd(file$V3)
-
-The value for $11 changed according to the coverage range defined for the specific data set. 
-
-13.2. Filter coverage range ($11), probability of having a mutation on a given site ($7, $8, $9), filter for unique mutations on a sample (not present in other lines $15), avoid calling a mutation given mismapped reads ($16 and $17), enough reads support the mutation ($18 and $19).
-
-```cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96 && $18 >=0.05 && $19 >=0.05) print $0}' > PS1159_mutationcandidates.filter-A.bed```
-
-13.2.1. Step by step the decrease in number of putative mutations can be tracked. 
-
-	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575) print $0}' | wc -l 
-
-	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0) print $0}' | wc -l
-
-	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9) print $0}' | wc -l
-
-	cat PS1159_mutationcandidates | awk '{if ($11 >=332 && $11 <=575 && $15 ==0 && $7 >=0.9 && $8 >=0.9 && $9 >=0.9 && $16 <=1.96 && $17 <=1.96) print $0}' | wc -l
-
-
-14. Obtain the number of callable sites within the defined coverage region. 
-
-We used the already obtained depth files from ```samtools depth filename.bam > filename.depth```
-
-```cat L19G31.sort.bam.sort.bam.depth | awk '{if ($3 >=10 && $3 <=50) print $0}' | wc -l ```
-
-
-15. Obtaining mutation rates and confidence intervals: 
-
-    15.1. For mutation rates the following equation was used for each of the mutation lines: 
-
-	μ=(called mutations)/(generations∗callable sites)
-
-    15.2. Average of μ for each of the strains was calculated. (Can’t insert equation, basically all μ divided the total number of μ for the strain). 
-
-    15.3. Estimation of confidence intervals: 
-
-Downloading Bayesian first aid on R
-
-	install.packages("devtools")
-	devtools::install_github("rasmusab/bayesian_first_aid")
-
-NOTE: as I was working on a Mac computer, an error on installation or jags occurred (package required for bayesian_first_aid). I directly downloaded the package from https://sourceforge.net/projects/mcmc-jags/files/JAGS/4.x/Mac%20OS%20X/ and installed it before installing bayesian_first_aid. 
-
-
-	JU_sex = c(1.62637E-09, 6.4472E-10, 1.60744E-09, 5.93941E-10, 1.17891E-09)
-	PS_asex =c(9.64506E-10, 6.94089E-10, 4.08937E-10, 7.2004E-10, 7.9846E-10)
-	comparing= c(9.41896E-10, 5.67965E-10)
-	sites = c(278665301,374228169)
-	bayes.poisson.test(comparing, sites)
-	plot(bayes.poisson.test(comparing, sites))
-
-Sites refers to the number of callable sites for each reproduction mode. The result of this analysis tells us how different our groups are and provides confidence intervals of the values: a lower limit and an upper limit.
-
-
-
-### **GENOME ASSEMBLY - using long reads**
-
-
-1. Checking kmer spectra of the raw reads using different tools
-
-- BBmap
-
-```bbmap/kmercountexact.sh qin=33 k=27 in=HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz khist=PS1146_bbmaphistk27.txt peaks=PS1146_bbmaopeaks27.txt -Xmx3600M```
-
-- KAT - K-mer Analysis Toolkit
-
-```kat hist -o ES5_kat227 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz```
-
-2. Genome size estimaton
-
-Can be obtained from the header of the output file from bbmap
-Can be obtained from log file of KAT --> was the most accurate one compared to previous reports on the genus
-Can be obtained using the espectra obtained from KAT using tools like Genomescope (online http://qb.cshl.edu/genomescope/) and findGSE (R based)
-
-Command on R using findGSE: ```findGSE(histo="PS1146_kat31", sizek=27, outdir="PS1146_27mer")```
-
-3. Assembly 
-
-3.1. Flye
-
-```flye --pacbio-hifi HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz --out-dir HiFi_reads/PS1146/ --threads 8```
-
-3.2. Hifiasm
-
-```./hifiasm/hifiasm -o PS1146_hifiasm -t 8 HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
-
-3.3. Wtdbg2
-
-```wtdbg2 -t 8 -x ccs -g 300m -fo PS1146_redbean -i HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.g```
-
-```wtpoa-cns -t 16 -i PS1146_redbean.ctg.lay.gz -fo PS1146_redbean.raw.fa```
-
-```minimap2 -t16 -ax map-pb -r2k PS1146_redbean.raw.fa HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz | samtools sort -@4 >PS1146_redbean.bam```
-
-```samtools view -F0x900 PS1146_redbean.bam | wtpoa-cns -t 16 -d PS1146_redbean.raw.fa -i - -fo PS1146_readbean.cns.fa```
-
-3.4. Canu - for Hifi reads
-
-
-```./canu/build/bin/canu -p HiFi_reads/PS1146/PS1146_canu genomeSize=500m -d HiFi_reads/ -maxThreads=16 -maxMemory=120g -pacbio-hifi useGrid=false HiFi_reads/PS1146/m54274Ue_211112_020939.hifi_reads.fastq.gz```
-
-4. Assesing the quality of the assemblies
-
-- GVolante
-
-Used to obtain busco completeness (BUSCO V4), obtain N50 and check for duplications (https://gvolante.riken.jp). Based on these common metrics, the "best" assembly was selected for the following steps.
-
-5. Checking for coverage and contaminations using blobtoolkit
-
-- Some notes on how to install it on CHEOPS: 
-
-	module purge
-	module load miniconda
-	eval "$(conda shell.bash hook)"
-
-
-Use Conda to install remaining dependencies: 
-
-	conda create -n btk_env -c conda-forge -y python=3.6 docopt psutil pyyaml ujson tqdm nodejs=10 yq;
-	conda activate btk_env;
-	conda install -c bioconda -y pysam seqtk;
-	conda install -c conda-forge -y geckodriver selenium pyvirtualdisplay;
-	pip install fastjsonschema;
-	mkdir -p ~/blobtoolkit;
-	cd ~/blobtoolkit;
-	git clone https://github.com/blobtoolkit/blobtools2;
-	git clone https://github.com/blobtoolkit/viewer;
-	git clone https://github.com/blobtoolkit/specification;
-	git clone https://github.com/blobtoolkit/insdc-pipeline;
-	cd viewer;
-	npm install;
-	cd ..;
-
-inside the btk_env environment in the folder /blobtoolkit/viewer:
-
-```npm audit fix```
-
-and then inside blobtoolkit/blobtools2: 
-
-```do pip install -r requirements.txt --ignore-installed certifi```
-
-
-- Creating a data base adding coverage, hits and BUSCO completness results (all steps are done after activating the conda environment btk_env)
-
-* Creating the database
-
-```./blobtoolkit/blobtools2/blobtools create --fasta ES5_hifiasm/ES5_primary_contigs_hifiasm.fa ES5_hifiasm/Dataset_blob/```
-
-* Adding BUSCO results
-
-```./blobtoolkit/blobtools2/blobtools add --busco blobtools_info/ES5_hifiasm.busco.nematoda_odb10.tsv blobtools_info/ES5_hifiasm```
-
-While running add busco, the .tsv file is the one obtained while running busco on gvolante. It requires bit of manual editing, like changing the contigs names so they match that of the assembly and removing missing genes so all contigs match the identifiers defined while creating the database.
-
-* Running blast to obtain hits that will be added to the database
-
-		blastn -db blobtools_info/nt/nt \
-       	-query ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
-       	-outfmt '6 qseqid staxids bitscore std' \
-       	-max_target_seqs 10 \
-       	-max_hsps 1 \
-       	-evalue 1e-25 \
-       	-num_threads 32 \
-       	-out ES5_hifiasm.ncbi.blastn.out
-
-* Running minimap2 to obtain a mapping of the reads against the assembly and check coverage
-
-		minimap2 -ax map-hifi \
-        	 -t 32 ES5_hifiasm/ES5_primary_contigs_hifiasm.fa \
-        	 HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz \
-		| samtools sort -@32 -O BAM -o ES5_hifiasm.mapped.bam -
-
-* Adding all the generated files to the databse
-
-
-		./blobtoolkit/blobtools2/blobtools add --taxrule bestsumorder \
-		--taxdump /blobtools_info/taxdump/ \
-		--cov filtered_ES5_hifiasm.mapped.bam \
-		--hits filtered_ES5_hifiasm.ncbi.blastn.out \
-		Dataset_blob
-
-* Visualizing results (not done on cheops - motoko)
-
-```./blobtoolkit/blobtools2/blobtools view --remote Dataset_blob``` 
-
-
-* Filtering assembly and raw reads according to taxa that has highly different GC content or is bacteria we would expect as contamination from the media
-
-```./blobtoolkit/blobtools2/blobtools filter --param bestsumorder_phylum--Keys=Proteobacteria,Bacteroidetes,Actinobacteria,Chordata,Uroviricota --fastq HiFi_reads/ES5/m54274Ue_211114_223525.hifi_reads.fastq.gz  —cov ES5_hifiasm/ES5_hifiasm.mapped.bam ES5_hifiasm/Dataset_blob```
-
-
-6. Purging assembly to purge duplicates in the assembly that migth be the result of highly heterozygous regions and not really duplications (purge_dups was installed using conda) 
-
-	conda activate minimap_purge
-	pri_asm=2filtered_ES5_hifiasm.fasta
-	for i in $(cat pb.fofn)
-	do
-	minimap2 -xasm20 $pri_asm $i | gzip -c - > $i.paf.gz
-	done
-	pbcstat *.paf.gz
-	calcuts PB.stat > cutoffs 2>calcults.log
-	split_fa $pri_asm > $pri_asm.split
-	minimap2 -xasm5 -DP $pri_asm.split $pri_asm.split | gzip -c - > $pri_asm.split.self.paf.gz
-	purge_dups -2 -T cutoffs -c PB.base.cov $pri_asm.split.self.paf.gz > dups.bed 2> purge_dups.log
-	get_seqs -e dups.bed $pri_asm
-	
-
-All following steps are performed on the resulting purged assembly without the contaminant reads. 
-
-7. Gene annotation
-
-7.1. Repeat masking - loaded modules on cheops repeat omdeler and repeatmasker
-
-	BuildDatabase -name ES5_gene_DB 2filtered_ES5_hifiasm.purged.fa
-	RepeatModeler -pa 24 -database ES5_gene_DB
-	RepeatClassifier -consensi ES5_gene_DB-families.fa
-	RepeatMasker -pa 16 -e ncbi -lib ES5_gene_DB-families.fa 2filtered_ES5_hifiasm.purged.fa
-
-7.2. Alignment
-
-For ES5, where RNA-seq was available on the SRR data base, alignment of reads against reference genome wa sperformed using gsnap
-
-```gmap_build -D es5_annotation/ -d genome_index 2filtered_ES5_hifiasm.purged.fa.masked```
-
-```gsnap -t 4 -D es5_annotation/ -d genome_index -A sam -o es5_annotation/ES5-rnaseq.mapped.gsnap.sam ES5_r1.fq ES5_r2.fq```
-
-7.3. Prediction and annotation
-For PS1146 using augustus
-
-```augustus --species=caenorhabditis 2filtered_PS1146_hifiasm.purged.fa.masked  > annotation_trial_PS1146.gff```
-
-For ES5 using braker2
-```braker.pl --species=ES5 --AUGUSTUS_CONFIG_PATH=/scratch/lvilleg1/augustus_config/ --genome=2filtered_ES5_hifiasm.purged.fa.masked --bam=es5_annotation/ES5_RNA_seq_gsnap.mapped.sort.bam```
-
-7.4. Running BUSCO on gVolante for resulting coding sequences.
-
-7.5. Extracting statistics from annotation (from gff/gtf files)
-
-Extracting general stats (number of genes, exons and introns, number of coding sequences, start codons and stop codons) as well as length distribution
-
-```gt gff3 -sort -tidy PS1146_augustus.gtf | gt stat -genelengthdistri -o PS1146_genelengthdist.txt```
-
-Here, the code only for gene length is shown, exon and intron length were also estimated using the flags ```-exonlengthdistri```and ```-intornlengthdistri```
-
-8. Close similarity between assemblies 
-
-Using D-Genies the assembled genomes were compared to the previously available assemblies of either the same species or a closely related one to compare the genomes in terms of repetitions, breaks and inversions. 
-
 
